@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<measure>
+  <schema_version>3.0</schema_version>
+  <name>set_output_table_to_ip_units_v_2</name>
+  <uid>d19c3b12-6dd1-4efb-b3e6-397460a856b2</uid>
+  <version_id>0bc6c63b-f78c-4197-a643-77cc10a44c4e</version_id>
+  <version_modified>20220625T173937Z</version_modified>
+  <xml_checksum>E29E78F9</xml_checksum>
+  <class_name>SetOutputTableToIPUnitsV2</class_name>
+  <display_name>Set Output Table To IP Units v2</display_name>
+  <description>This measure changes the output table to be in IP units but the sql file remains in SI units to allow generation of OpenStudio Results. Only compatible with EnergyPlus versions after Feb 18, 2021</description>
+  <modeler_description>This EnergyPlus measure sets the OutputControl:Table:Style to InchPound. It also sets 'Unit Conversion for Tabular Data' in Output:SQLite to 'None'.</modeler_description>
+  <arguments />
+  <outputs />
+  <provenances />
+  <tags>
+    <tag>Reporting.QAQC</tag>
+  </tags>
+  <attributes>
+    <attribute>
+      <name>Measure Function</name>
+      <value>Measure</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Requires EnergyPlus Results</name>
+      <value>false</value>
+      <datatype>boolean</datatype>
+    </attribute>
+    <attribute>
+      <name>Uses SketchUp API</name>
+      <value>false</value>
+      <datatype>boolean</datatype>
+    </attribute>
+    <attribute>
+      <name>Measure Type</name>
+      <value>EnergyPlusMeasure</value>
+      <datatype>string</datatype>
+    </attribute>
+  </attributes>
+  <files>
+    <file>
+      <filename>example.idf</filename>
+      <filetype>idf</filetype>
+      <usage_type>test</usage_type>
+      <checksum>8810333C</checksum>
+    </file>
+    <file>
+      <version>
+        <software_program>OpenStudio</software_program>
+        <identifier>0.11.3</identifier>
+        <min_compatible>0.11.3</min_compatible>
+      </version>
+      <filename>measure.rb</filename>
+      <filetype>rb</filetype>
+      <usage_type>script</usage_type>
+      <checksum>493AA545</checksum>
+    </file>
+    <file>
+      <filename>SetOutputTableToIPUnits_Test.rb</filename>
+      <filetype>rb</filetype>
+      <usage_type>test</usage_type>
+      <checksum>A19C4C04</checksum>
+    </file>
+  </files>
+</measure>
