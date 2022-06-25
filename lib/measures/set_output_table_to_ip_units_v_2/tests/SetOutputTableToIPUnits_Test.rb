@@ -15,7 +15,7 @@ class SetOutputTableToIPUnits_Test < MiniTest::Test
     # this test ensures that the current test is matched to the measure inputs
 
     # create an instance of the measure
-    measure = MYSetOutputTableToIPUnits.new
+    measure = SetOutputTableToIPUnitsV2.new
 
     #load the example workspace
     workspace = OpenStudio::Workspace.new
@@ -30,7 +30,7 @@ class SetOutputTableToIPUnits_Test < MiniTest::Test
     test_name = "test_run"
 
     # create an instance of the measure
-    measure = MYSetOutputTableToIPUnits.new
+    measure = SetOutputTableToIPUnitsV2.new
 
     # create an instance of a runner
     runner = OpenStudio::Ruleset::OSRunner.new
