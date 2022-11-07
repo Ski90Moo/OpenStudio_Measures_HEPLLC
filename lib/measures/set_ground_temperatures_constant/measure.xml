@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<measure>
+  <schema_version>3.0</schema_version>
+  <name>set_ground_temperatures_constant</name>
+  <uid>42b30e3e-86f6-4adc-a8a2-79183caf1236</uid>
+  <version_id>855895f9-1a03-4f18-b7fb-72d4c0615cc2</version_id>
+  <version_modified>20221104T194243Z</version_modified>
+  <xml_checksum>2CA5346E</xml_checksum>
+  <class_name>SetGroundTemperaturesConstant</class_name>
+  <display_name>Set Ground Temperatures-Constant</display_name>
+  <description>This measure will set an annual average ground temperature for ground contact surfaces.  It sets the EnergyPlus object Site:GroundTemperature:BuildingSurface to a constant specified temperature for the whole year.</description>
+  <modeler_description>User inputs annual average ground temperature.  This is passed to the EnergyPlus object Site:GroundTemperature:BuildingSurface for all months of the year.</modeler_description>
+  <arguments>
+    <argument>
+      <name>annual_average_ground_temp</name>
+      <display_name>Annual Average Ground Temperature °C</display_name>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>11.2</default_value>
+    </argument>
+  </arguments>
+  <outputs />
+  <provenances />
+  <tags>
+    <tag>Whole Building.Whole Building Schedules</tag>
+  </tags>
+  <attributes>
+    <attribute>
+      <name>Uses SketchUp API</name>
+      <value>false</value>
+      <datatype>boolean</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>OpenStudio Application</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Use Case</name>
+      <value>Model Articulation</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>Apply Measure Now</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Use Case</name>
+      <value>Model Articulation</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Measure Type</name>
+      <value>ModelMeasure</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>Apply Measure Now</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>OpenStudio Application</value>
+      <datatype>string</datatype>
+    </attribute>
+  </attributes>
+  <files>
+    <file>
+      <filename>README.md.erb</filename>
+      <filetype>erb</filetype>
+      <usage_type>readmeerb</usage_type>
+      <checksum>703C9964</checksum>
+    </file>
+    <file>
+      <filename>LICENSE.md</filename>
+      <filetype>md</filetype>
+      <usage_type>license</usage_type>
+      <checksum>A21A3ED2</checksum>
+    </file>
+    <file>
+      <filename>README.md</filename>
+      <filetype>md</filetype>
+      <usage_type>readme</usage_type>
+      <checksum>656F4E61</checksum>
+    </file>
+    <file>
+      <version>
+        <software_program>OpenStudio</software_program>
+        <identifier>2.0.0</identifier>
+        <min_compatible>2.0.0</min_compatible>
+      </version>
+      <filename>measure.rb</filename>
+      <filetype>rb</filetype>
+      <usage_type>script</usage_type>
+      <checksum>544A185D</checksum>
+    </file>
+  </files>
+</measure>
