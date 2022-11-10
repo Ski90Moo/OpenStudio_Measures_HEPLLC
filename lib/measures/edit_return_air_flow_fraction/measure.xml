@@ -1,0 +1,109 @@
+<?xml version="1.0"?>
+<measure>
+  <schema_version>3.0</schema_version>
+  <name>edit_return_air_flow_fraction</name>
+  <uid>3163802d-596c-4d9c-b054-72a44dc8e103</uid>
+  <version_id>0f9864ee-bb56-4877-aaf2-6e9e528cd980</version_id>
+  <version_modified>20210130T224242Z</version_modified>
+  <xml_checksum>810E0F39</xml_checksum>
+  <class_name>EditReturnAirFlowFraction</class_name>
+  <display_name>Edit Return Air Flow Fraction</display_name>
+  <description>This modifies the Design Return Air Flow Fraction of Supply Air Flow from the default of 1 for cases where the system return fan never returns as much airflow as the supply fan.</description>
+  <modeler_description>This measure is puts a maximum on the return fan airflow. If the fan is set for autosized, it does not affect the sizing of the return fan. It will only limit the return fan flow rate during the simulation.</modeler_description>
+  <arguments>
+    <argument>
+      <name>loop_name</name>
+      <display_name>Air Loop with Return Fan</display_name>
+      <type>String</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+    </argument>
+    <argument>
+      <name>return_fraction</name>
+      <display_name>Return Air Flow Fraction</display_name>
+      <type>Double</type>
+      <units>Fraction</units>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+    </argument>
+  </arguments>
+  <outputs />
+  <provenances />
+  <tags>
+    <tag>HVAC.Whole System</tag>
+  </tags>
+  <attributes>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>Apply Measure Now</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>OpenStudio Application</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>Parametric Analysis Tool</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Measure Type</name>
+      <value>EnergyPlusMeasure</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>Apply Measure Now</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>OpenStudio Application</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>Parametric Analysis Tool</value>
+      <datatype>string</datatype>
+    </attribute>
+  </attributes>
+  <files>
+    <file>
+      <filename>LICENSE.md</filename>
+      <filetype>md</filetype>
+      <usage_type>license</usage_type>
+      <checksum>9640B6CB</checksum>
+    </file>
+    <file>
+      <filename>README.md.erb</filename>
+      <filetype>erb</filetype>
+      <usage_type>readmeerb</usage_type>
+      <checksum>703C9964</checksum>
+    </file>
+    <file>
+      <filename>edit_return_air_flow_fraction_test.rb</filename>
+      <filetype>rb</filetype>
+      <usage_type>test</usage_type>
+      <checksum>F2743EBD</checksum>
+    </file>
+    <file>
+      <filename>README.md</filename>
+      <filetype>md</filetype>
+      <usage_type>readme</usage_type>
+      <checksum>3578E8B5</checksum>
+    </file>
+    <file>
+      <version>
+        <software_program>OpenStudio</software_program>
+        <identifier>2.0.0</identifier>
+        <min_compatible>2.0.0</min_compatible>
+      </version>
+      <filename>measure.rb</filename>
+      <filetype>rb</filetype>
+      <usage_type>script</usage_type>
+      <checksum>7FE6AFEE</checksum>
+    </file>
+  </files>
+</measure>
