@@ -1,4 +1,4 @@
-class SetOutputTableToIPUnitsV2 < OpenStudio::Ruleset::OpenStudio::Measure::EnergyPlusMeasure
+class SetOutputTableToIPUnitsV2 < OpenStudio::Measure::EnergyPlusMeasure
 
   def name
     return "Set Output Table To IP Units v2"
