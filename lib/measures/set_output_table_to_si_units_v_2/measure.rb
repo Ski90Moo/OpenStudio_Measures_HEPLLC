@@ -1,4 +1,4 @@
-class SetOutputTableToSIUnitsV2 < OpenStudio::Ruleset::WorkspaceUserScript
+class SetOutputTableToSIUnitsV2 < OpenStudio::Measure::EnergyPlusMeasure
 
   def name
     return "Set Output Table To SI Units v2"
