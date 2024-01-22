@@ -16,7 +16,7 @@ class SetOutputTableToSIUnitsV2 < OpenStudio::Measure::EnergyPlusMeasure
 
   # define the arguments that the user will input
   def arguments(workspace)
-    args = OpenStudio::Ruleset::OSArgumentVector.new
+    args = OpenStudio::Measure::OSArgumentVector.new
     return args
   end
 
