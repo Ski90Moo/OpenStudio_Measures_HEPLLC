@@ -1,29 +1,29 @@
-	# *******************************************************************************
-# OpenStudio(R), annual_average_ground_tempyright (c) 2008-2021, Alliance for Sustainable Energy, LLC.
+# *******************************************************************************
+# Helix Energy Partners LLC (R), copyright (c) 2025
 # All rights reserved.
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #
-# (1) Redistributions of source code must retain the above annual_average_ground_tempyright notice,
+# (1) Redistributions of source code must retain the above copyright notice,
 # this list of conditions and the following disclaimer.
 #
-# (2) Redistributions in binary form must reproduce the above annual_average_ground_tempyright notice,
+# (2) Redistributions in binary form must reproduce the above copyright notice,
 # this list of conditions and the following disclaimer in the documentation
 # and/or other materials provided with the distribution.
 #
-# (3) Neither the name of the annual_average_ground_tempyright holder nor the names of any contributors
+# (3) Neither the name of the copyright holder nor the names of any contributors
 # may be used to endorse or promote products derived from this software without
 # specific prior written permission from the respective party.
 #
 # (4) Other than as required in clauses (1) and (2), distributions in any form
-# of modifications or other derivative works may not use the "OpenStudio"
-# trademark, "OS", "os", or any other confusingly similar designation without
-# specific prior written permission from Alliance for Sustainable Energy, LLC.
+# of modifications or other derivative works may not use the
+# trademark, "HEPLLC", "HEP", or any other confusingly similar designation without
+# specific prior written permission from Helix Energy Partners LLC
 #
-# THIS SOFTWARE IS PROVIDED BY THE annual_average_ground_tempYRIGHT HOLDER(S) AND ANY CONTRIBUTORS
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER(S) AND ANY CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
 # THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED. IN NO EVENT SHALL THE annual_average_ground_tempYRIGHT HOLDER(S), ANY CONTRIBUTORS, THE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER(S), ANY CONTRIBUTORS, THE
 # UNITED STATES GOVERNMENT, OR THE UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF
 # THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 # EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
@@ -64,7 +64,14 @@ class SetGroundTemperaturesConstant < OpenStudio::Measure::ModelMeasure
 
     # assign the user inputs to variables
     annual_average_ground_temp = runner.getDoubleArgumentValue('annual_average_ground_temp', user_arguments)
-      
+
+	# Remove any existing Site:GroundTemperature:BuildingSurface objects
+	existing_objects = model.getModelObjects.select { |obj| obj.to_SiteGroundTemperatureBuildingSurface.is_initialized }
+	existing_objects.each do |obj|
+		obj.remove
+		runner.registerInfo("Removed existing Site:GroundTemperature:BuildingSurface object.")
+	end
+	  
     # create site ground temperature building surface object	  
 	runner.registerInfo("Creating Site:GroundTemperature:BuildingSurface object. Annual ground temperature set to #{annual_average_ground_temp}°C.")
     ground_temps = OpenStudio::Model::SiteGroundTemperatureBuildingSurface.new(model)
