@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<measure>
+  <schema_version>3.1</schema_version>
+  <name>replace_chiller_with_air_source_heat_pumps</name>
+  <uid>a1b2c3d4-e5f6-7890-abcd-ef1234567890</uid>
+  <version_id>14812883-e2aa-4c17-b6d3-180c17698535</version_id>
+  <version_modified>2025-10-29T08:56:09Z</version_modified>
+  <xml_checksum>9A2F6E61</xml_checksum>
+  <class_name>ReplaceChillerWithAirSourceHeatPumps</class_name>
+  <display_name>Replace Chiller with Air Source Heat Pumps</display_name>
+  <description>This measure removes the condenser water loop and cooling tower, replaces the water-cooled chiller with an air-source heat pump for cooling, and adds an air-source heat pump for heating in parallel with the existing boiler.</description>
+  <modeler_description>The measure deletes the condenser water plant loop with CoolingTower:SingleSpeed. It replaces the Chiller:Electric:EIR with a HeatPump:PlantLoop:EIR:Cooling object. It also adds a HeatPump:PlantLoop:EIR:Heating object in parallel to the existing Boiler:HotWater on the heating water loop.</modeler_description>
+  <arguments>
+    <argument>
+      <name>cooling_hp_capacity</name>
+      <display_name>Cooling Heat Pump Capacity (W)</display_name>
+      <description>Reference capacity of the cooling heat pump. Leave blank for autosize.</description>
+      <type>Double</type>
+      <required>false</required>
+      <model_dependent>false</model_dependent>
+    </argument>
+    <argument>
+      <name>heating_hp_capacity</name>
+      <display_name>Heating Heat Pump Capacity (W)</display_name>
+      <description>Reference capacity of the heating heat pump. Leave blank for autosize.</description>
+      <type>Double</type>
+      <required>false</required>
+      <model_dependent>false</model_dependent>
+    </argument>
+  </arguments>
+  <outputs />
+  <provenances />
+  <tags>
+    <tag>HVAC.Cooling</tag>
+    <tag>HVAC.Heating</tag>
+    <tag>HVAC.Heat Pumps</tag>
+  </tags>
+  <attributes>
+    <attribute>
+      <name>Measure Type</name>
+      <value>ModelMeasure</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>Apply Measure Now</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>OpenStudio Application</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Use Case</name>
+      <value>Model Articulation</value>
+      <datatype>string</datatype>
+    </attribute>
+  </attributes>
+  <files>
+    <file>
+      <filename>README.md</filename>
+      <filetype>md</filetype>
+      <usage_type>readme</usage_type>
+      <checksum>19B7CC50</checksum>
+    </file>
+    <file>
+      <filename>measure.rb</filename>
+      <filetype>rb</filetype>
+      <usage_type>script</usage_type>
+      <checksum>F420A2F6</checksum>
+    </file>
+  </files>
+</measure>
