@@ -6,7 +6,7 @@ This OpenStudio measure converts a water-cooled chiller system to air-source hea
 
 1. **Deletes the condenser water loop** - Removes the existing condenser water plant loop with its cooling tower
 2. **Replaces the water-cooled chiller** - Substitutes the `Chiller:Electric:EIR` with an air-source `HeatPump:PlantLoop:EIR:Cooling`
-3. **Adds heating heat pump** - Installs an air-source `HeatPump:PlantLoop:EIR:Heating` in parallel with the existing boiler
+3. **Adds heating heat pump** - Installs an air-source `HeatPump:PlantLoop:EIR:Heating` in series with the existing boiler
 
 ## Modeler Description
 
@@ -14,7 +14,7 @@ The measure searches through the model's plant loops to identify and modify the 
 
 - Identifies the condenser water loop by finding a `CoolingTower:SingleSpeed` component and removes the entire loop
 - Locates the `Chiller:Electric:EIR` object on the chilled water loop and replaces it with a `HeatPump:PlantLoop:EIR:Cooling` object
-- Finds the `Boiler:HotWater` on the heating water loop and adds a `HeatPump:PlantLoop:EIR:Heating` object in parallel
+- Finds the `Boiler:HotWater` on the heating water loop and adds a `HeatPump:PlantLoop:EIR:Heating` object in series
 
 The heat pumps are configured with:
 - Air-cooled condenser type
@@ -75,7 +75,7 @@ ModelMeasure
 The measure will report:
 - Success or failure in deleting the condenser water loop
 - Confirmation of chiller replacement with cooling heat pump
-- Confirmation of heating heat pump addition in parallel with boiler
+- Confirmation of heating heat pump addition in series with boiler
 
 ### Warnings and Errors
 
@@ -87,7 +87,7 @@ The measure will report:
 
 - The measure is compatible with OpenStudio 3.0.0 and later
 - Heat pump objects use default performance curves; you may need to adjust curves for specific equipment
-- The heating heat pump is added in parallel with the boiler, allowing for dual-fuel operation
+- The heating heat pump is added in series with the boiler, allowing for dual-fuel operation
 - All autosized components will be sized during the EnergyPlus simulation
 - The measure removes the entire condenser loop, including pumps and any other components
 
