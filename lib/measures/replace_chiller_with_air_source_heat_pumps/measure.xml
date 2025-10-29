@@ -8,8 +8,8 @@
   <xml_checksum>9A2F6E61</xml_checksum>
   <class_name>ReplaceChillerWithAirSourceHeatPumps</class_name>
   <display_name>Replace Chiller with Air Source Heat Pumps</display_name>
-  <description>This measure removes the condenser water loop and cooling tower, replaces the water-cooled chiller with an air-source heat pump for cooling, and adds an air-source heat pump for heating in parallel with the existing boiler.</description>
-  <modeler_description>The measure deletes the condenser water plant loop with CoolingTower:SingleSpeed. It replaces the Chiller:Electric:EIR with a HeatPump:PlantLoop:EIR:Cooling object. It also adds a HeatPump:PlantLoop:EIR:Heating object in parallel to the existing Boiler:HotWater on the heating water loop.</modeler_description>
+  <description>This measure removes the condenser water loop and cooling tower, replaces the water-cooled chiller with an air-source heat pump for cooling, and adds an air-source heat pump for heating in series with the existing boiler.</description>
+  <modeler_description>The measure deletes the condenser water plant loop with CoolingTower:SingleSpeed. It replaces the Chiller:Electric:EIR with a HeatPump:PlantLoop:EIR:Cooling object. It also adds a HeatPump:PlantLoop:EIR:Heating object in series to the existing Boiler:HotWater on the heating water loop.</modeler_description>
   <arguments>
     <argument>
       <name>cooling_hp_capacity</name>
@@ -72,3 +72,4 @@
     </file>
   </files>
 </measure>
+
