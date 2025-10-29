@@ -7,12 +7,12 @@ class ReplaceChillerWithAirSourceHeatPumps < OpenStudio::Measure::ModelMeasure
 
   # human readable description
   def description
-    return 'This measure removes the condenser water loop and cooling tower, replaces the water-cooled chiller with an air-source heat pump for cooling, and adds an air-source heat pump for heating in parallel with the existing boiler.'
+    return 'This measure removes the condenser water loop and cooling tower, replaces the water-cooled chiller with an air-source heat pump for cooling, and adds an air-source heat pump for heating in series with the existing boiler.'
   end
 
   # human readable description of modeling approach
   def modeler_description
-    return 'The measure deletes the condenser water plant loop with CoolingTower:SingleSpeed. It replaces the Chiller:Electric:EIR with a HeatPump:PlantLoop:EIR:Cooling object. It also adds a HeatPump:PlantLoop:EIR:Heating object in parallel to the existing Boiler:HotWater on the heating water loop.'
+    return 'The measure deletes the condenser water plant loop with CoolingTower:SingleSpeed. It replaces the Chiller:Electric:EIR with a HeatPump:PlantLoop:EIR:Cooling object. It also adds a HeatPump:PlantLoop:EIR:Heating object in series to the existing Boiler:HotWater on the heating water loop.'
   end
 
   # define the arguments that the user will input
@@ -125,7 +125,7 @@ class ReplaceChillerWithAirSourceHeatPumps < OpenStudio::Measure::ModelMeasure
       return false
     end
 
-    # TASK 3: Add air-source heating heat pump in parallel with boiler
+    # TASK 3: Add air-source heating heat pump in series with boiler
     heating_hp_added = false
     
     model.getPlantLoops.each do |plant_loop|
@@ -156,11 +156,11 @@ class ReplaceChillerWithAirSourceHeatPumps < OpenStudio::Measure::ModelMeasure
           heating_hp.autosizeLoadSideReferenceFlowRate
           heating_hp.autosizeSourceSideReferenceFlowRate
           
-          # Add the heating heat pump to the hot water loop (in parallel with boiler)
+          # Add the heating heat pump to the hot water loop (in series with boiler)
           heating_hp.addToNode(plant_loop.supplyInletNode)
           
           heating_hp_added = true
-          runner.registerInfo('Added air-source heating heat pump in parallel with boiler')
+          runner.registerInfo('Added air-source heating heat pump in series with boiler')
           break
         end
       end
