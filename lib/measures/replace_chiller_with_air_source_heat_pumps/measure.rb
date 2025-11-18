@@ -1,3 +1,4 @@
+# This measure was created by Helix Energy Partners LLC with Claude AI Sonnet 4.5 October 2025
 # start the measure
 class ReplaceChillerWithAirSourceHeatPumps < OpenStudio::Measure::ModelMeasure
   # human readable name
