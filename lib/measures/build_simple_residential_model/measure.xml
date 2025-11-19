@@ -1,0 +1,528 @@
+<?xml version='1.0'?>
+<measure>
+  <schema_version>3.1</schema_version>
+  <name>build_simple_residential_model</name>
+  <uid>f8624d92-b6f8-450a-9e6c-1b4e58df42c4</uid>
+  <version_id>5c4d59a2-7dc2-4b7c-b3ec-a6786b4cda85</version_id>
+  <version_modified>2025-11-19T14:38:15Z</version_modified>
+  <xml_checksum>FCF3732A</xml_checksum>
+  <class_name>BuildSimpleResidentialModel</class_name>
+  <display_name>Build Simple Residential Model</display_name>
+  <description>
+    This measure creates a simple residential building model similar to
+    ResStock/HPXML approach. It generates geometry, constructions, HVAC systems,
+    and other building components for a single-family home.
+  </description>
+  <modeler_description>
+    This measure creates a residential model by defining geometry from
+    high-level inputs (floor area, number of stories, etc.), applying
+    residential constructions, adding HVAC and water heating systems, and
+    configuring lighting and plug loads. The approach is similar to ResStock but
+    simplified for demonstration purposes.
+  </modeler_description>
+  <arguments>
+    <argument>
+      <name>delete_existing_model</name>
+      <display_name>Delete Existing Model?</display_name>
+      <description>
+        If true, removes all existing objects from the model before creating the
+        new residential building. If false, adds to the existing model.
+      </description>
+      <type>Boolean</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>true</default_value>
+      <choices>
+        <choice>
+          <value>true</value>
+          <display_name>true</display_name>
+        </choice>
+        <choice>
+          <value>false</value>
+          <display_name>false</display_name>
+        </choice>
+      </choices>
+    </argument>
+    <argument>
+      <name>delete_weather_and_design_days</name>
+      <display_name>Delete Existing Weather and Design Days?</display_name>
+      <description>
+        Only applies if Delete Existing Model is true. If false, preserves
+        existing WeatherFile and DesignDay objects. If true, removes everything
+        including weather data.
+      </description>
+      <type>Boolean</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>false</default_value>
+      <choices>
+        <choice>
+          <value>true</value>
+          <display_name>true</display_name>
+        </choice>
+        <choice>
+          <value>false</value>
+          <display_name>false</display_name>
+        </choice>
+      </choices>
+    </argument>
+    <argument>
+      <name>geometry_building_type</name>
+      <display_name>Building Type</display_name>
+      <type>Choice</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>Single-Family Detached</default_value>
+      <choices>
+        <choice>
+          <value>Single-Family Detached</value>
+          <display_name>Single-Family Detached</display_name>
+        </choice>
+        <choice>
+          <value>Single-Family Attached</value>
+          <display_name>Single-Family Attached</display_name>
+        </choice>
+        <choice>
+          <value>Apartment Unit</value>
+          <display_name>Apartment Unit</display_name>
+        </choice>
+      </choices>
+    </argument>
+    <argument>
+      <name>geometry_cfa</name>
+      <display_name>Conditioned Floor Area</display_name>
+      <type>Double</type>
+      <units>ft^2</units>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>2000</default_value>
+    </argument>
+    <argument>
+      <name>geometry_num_floors_above_grade</name>
+      <display_name>Number of Floors Above Grade</display_name>
+      <type>Integer</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>2</default_value>
+    </argument>
+    <argument>
+      <name>geometry_aspect_ratio</name>
+      <display_name>Building Aspect Ratio</display_name>
+      <description>Ratio of front wall length to side wall length</description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>1.5</default_value>
+    </argument>
+    <argument>
+      <name>foundation_type</name>
+      <display_name>Foundation Type</display_name>
+      <type>Choice</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>Slab</default_value>
+      <choices>
+        <choice>
+          <value>Slab</value>
+          <display_name>Slab</display_name>
+        </choice>
+        <choice>
+          <value>Vented Crawlspace</value>
+          <display_name>Vented Crawlspace</display_name>
+        </choice>
+        <choice>
+          <value>Unvented Crawlspace</value>
+          <display_name>Unvented Crawlspace</display_name>
+        </choice>
+        <choice>
+          <value>Conditioned Basement</value>
+          <display_name>Conditioned Basement</display_name>
+        </choice>
+      </choices>
+    </argument>
+    <argument>
+      <name>wall_assembly_r</name>
+      <display_name>Wall Assembly R-value</display_name>
+      <type>Double</type>
+      <units>h-ft^2-R/Btu</units>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>13</default_value>
+    </argument>
+    <argument>
+      <name>ceiling_assembly_r</name>
+      <display_name>Ceiling/Attic Assembly R-value</display_name>
+      <type>Double</type>
+      <units>h-ft^2-R/Btu</units>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>38</default_value>
+    </argument>
+    <argument>
+      <name>window_ufactor</name>
+      <display_name>Window U-Factor</display_name>
+      <type>Double</type>
+      <units>Btu/h-ft^2-R</units>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>0.33</default_value>
+    </argument>
+    <argument>
+      <name>window_shgc</name>
+      <display_name>Window Solar Heat Gain Coefficient (SHGC)</display_name>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>0.45</default_value>
+    </argument>
+    <argument>
+      <name>window_to_wall_fraction</name>
+      <display_name>Window to Wall Ratio</display_name>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>0.15</default_value>
+    </argument>
+    <argument>
+      <name>hvac_system_type</name>
+      <display_name>HVAC System Type</display_name>
+      <type>Choice</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>Central Air Conditioner with Gas Furnace</default_value>
+      <choices>
+        <choice>
+          <value>Central Air Conditioner with Gas Furnace</value>
+          <display_name>Central Air Conditioner with Gas Furnace</display_name>
+        </choice>
+        <choice>
+          <value>Central Air Conditioner with Electric Furnace</value>
+          <display_name>Central Air Conditioner with Electric Furnace</display_name>
+        </choice>
+        <choice>
+          <value>Air Source Heat Pump</value>
+          <display_name>Air Source Heat Pump</display_name>
+        </choice>
+        <choice>
+          <value>Mini-Split Heat Pump</value>
+          <display_name>Mini-Split Heat Pump</display_name>
+        </choice>
+      </choices>
+    </argument>
+    <argument>
+      <name>hvac_cooling_efficiency_seer</name>
+      <display_name>Cooling System SEER</display_name>
+      <type>Double</type>
+      <units>Btu/W-h</units>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>13</default_value>
+    </argument>
+    <argument>
+      <name>hvac_heating_efficiency</name>
+      <display_name>Heating System Efficiency (AFUE for furnace, HSPF for heat pump)</display_name>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>0.78</default_value>
+    </argument>
+    <argument>
+      <name>dhw_type</name>
+      <display_name>Water Heater Type</display_name>
+      <type>Choice</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>Gas Storage Water Heater</default_value>
+      <choices>
+        <choice>
+          <value>Gas Storage Water Heater</value>
+          <display_name>Gas Storage Water Heater</display_name>
+        </choice>
+        <choice>
+          <value>Electric Storage Water Heater</value>
+          <display_name>Electric Storage Water Heater</display_name>
+        </choice>
+        <choice>
+          <value>Gas Tankless Water Heater</value>
+          <display_name>Gas Tankless Water Heater</display_name>
+        </choice>
+        <choice>
+          <value>Heat Pump Water Heater</value>
+          <display_name>Heat Pump Water Heater</display_name>
+        </choice>
+      </choices>
+    </argument>
+    <argument>
+      <name>dhw_efficiency</name>
+      <display_name>Water Heater Energy Factor</display_name>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>0.59</default_value>
+    </argument>
+    <argument>
+      <name>infiltration_ach50</name>
+      <display_name>Air Leakage (ACH50)</display_name>
+      <type>Double</type>
+      <units>1/h</units>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>7</default_value>
+    </argument>
+  </arguments>
+  <outputs/>
+  <provenances/>
+  <tags>
+    <tag>Whole Building.Space Types</tag>
+  </tags>
+  <attributes>
+    <attribute>
+      <name>Measure Type</name>
+      <value>ModelMeasure</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>Apply Measure Now</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>OpenStudio Application</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>Parametric Analysis Tool</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Use Case</name>
+      <value>Model Articulation</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Use Case</name>
+      <value>New Construction EE</value>
+      <datatype>string</datatype>
+    </attribute>
+  </attributes>
+  <files>
+    <file>
+      <filename>LICENSE.md</filename>
+      <filetype>md</filetype>
+      <usage_type>license</usage_type>
+      <checksum>4E306062</checksum>
+    </file>
+    <file>
+      <filename>README.md</filename>
+      <filetype>md</filetype>
+      <usage_type>readme</usage_type>
+      <checksum>68744602</checksum>
+    </file>
+    <file>
+      <filename>README.md.erb</filename>
+      <filetype>erb</filetype>
+      <usage_type>readmeerb</usage_type>
+      <checksum>6A400402</checksum>
+    </file>
+    <file>
+      <filename>measure.rb</filename>
+      <filetype>rb</filetype>
+      <usage_type>script</usage_type>
+      <checksum>367F1B53</checksum>
+    </file>
+    <file>
+      <filename>GenericGbxml.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>E27658D5</checksum>
+    </file>
+    <file>
+      <filename>LargeOffice04.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>5415617A</checksum>
+    </file>
+    <file>
+      <filename>MidriseApartment.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>EB7A2671</checksum>
+    </file>
+    <file>
+      <filename>SmallOffice.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>519B22EB</checksum>
+    </file>
+    <file>
+      <filename>USA_TX_Houston-Bush.Intercontinental.AP.722430_TMY3.epw</filename>
+      <filetype>epw</filetype>
+      <usage_type>test</usage_type>
+      <checksum>EE565FCC</checksum>
+    </file>
+    <file>
+      <filename>asm.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>C927EDEB</checksum>
+    </file>
+    <file>
+      <filename>build_simple_residential_model_test.rb</filename>
+      <filetype>rb</filetype>
+      <usage_type>test</usage_type>
+      <checksum>794A8894</checksum>
+    </file>
+    <file>
+      <filename>ecc.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>0D1FD7A7</checksum>
+    </file>
+    <file>
+      <filename>epr.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>55F8A3CA</checksum>
+    </file>
+    <file>
+      <filename>erc.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>F0ADEB91</checksum>
+    </file>
+    <file>
+      <filename>ese.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>08859CC2</checksum>
+    </file>
+    <file>
+      <filename>eun.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>4230F1BD</checksum>
+    </file>
+    <file>
+      <filename>gro.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>3DCB949D</checksum>
+    </file>
+    <file>
+      <filename>hsp.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>3324A4F6</checksum>
+    </file>
+    <file>
+      <filename>htl.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>08158030</checksum>
+    </file>
+    <file>
+      <filename>mbt.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>A03CF17A</checksum>
+    </file>
+    <file>
+      <filename>measure_test.osw</filename>
+      <filetype>osw</filetype>
+      <usage_type>test</usage_type>
+      <checksum>6DB338FC</checksum>
+    </file>
+    <file>
+      <filename>measure_test_hvac.rb</filename>
+      <filetype>rb</filetype>
+      <usage_type>test</usage_type>
+      <checksum>BD48BB46</checksum>
+    </file>
+    <file>
+      <filename>mfm.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>FAE2CA01</checksum>
+    </file>
+    <file>
+      <filename>mli.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>0D86F0AB</checksum>
+    </file>
+    <file>
+      <filename>mtl.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>4F124552</checksum>
+    </file>
+    <file>
+      <filename>nrs.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>06BC1C8F</checksum>
+    </file>
+    <file>
+      <filename>ofl.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>49A20678</checksum>
+    </file>
+    <file>
+      <filename>ofs.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>B9224A80</checksum>
+    </file>
+    <file>
+      <filename>rff.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>47177F4F</checksum>
+    </file>
+    <file>
+      <filename>rsd.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>E9854661</checksum>
+    </file>
+    <file>
+      <filename>rt3.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>14568D61</checksum>
+    </file>
+    <file>
+      <filename>rtl.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>B2BA32EE</checksum>
+    </file>
+    <file>
+      <filename>rts.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>E26A1E95</checksum>
+    </file>
+    <file>
+      <filename>scn.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>0CB53C80</checksum>
+    </file>
+    <file>
+      <filename>sun.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>58FF4052</checksum>
+    </file>
+    <file>
+      <filename>wrf.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>F22DEFBC</checksum>
+    </file>
+  </files>
+</measure>
