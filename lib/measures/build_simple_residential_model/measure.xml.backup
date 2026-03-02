@@ -4,29 +4,29 @@
   <name>build_simple_residential_model</name>
   <uid>f8624d92-b6f8-450a-9e6c-1b4e58df42c4</uid>
   <version_id>5c4d59a2-7dc2-4b7c-b3ec-a6786b4cda85</version_id>
-  <version_modified>2026-03-02T09:15:36Z</version_modified>
-  <xml_checksum>3E751A96</xml_checksum>
+  <version_modified>2025-11-19T14:38:15Z</version_modified>
+  <xml_checksum>FCF3732A</xml_checksum>
   <class_name>BuildSimpleResidentialModel</class_name>
   <display_name>Build Simple Residential Model</display_name>
   <description>
-     This measure creates a simple residential building model similar to
+    This measure creates a simple residential building model similar to
     ResStock/HPXML approach. It generates geometry, constructions, HVAC systems,
-    and other building components for a single-family home. 
+    and other building components for a single-family home.
   </description>
   <modeler_description>
-     This measure creates a residential model by defining geometry from
+    This measure creates a residential model by defining geometry from
     high-level inputs (floor area, number of stories, etc.), applying
     residential constructions, adding HVAC and water heating systems, and
     configuring lighting and plug loads. The approach is similar to ResStock but
-    simplified for demonstration purposes. 
+    simplified for demonstration purposes.
   </modeler_description>
   <arguments>
     <argument>
       <name>delete_existing_model</name>
       <display_name>Delete Existing Model?</display_name>
       <description>
-         If true, removes all existing objects from the model before creating
-        the new residential building. If false, adds to the existing model. 
+        If true, removes all existing objects from the model before creating the
+        new residential building. If false, adds to the existing model.
       </description>
       <type>Boolean</type>
       <required>true</required>
@@ -47,9 +47,9 @@
       <name>delete_weather_and_design_days</name>
       <display_name>Delete Existing Weather and Design Days?</display_name>
       <description>
-         Only applies if Delete Existing Model is true. If false, preserves
+        Only applies if Delete Existing Model is true. If false, preserves
         existing WeatherFile and DesignDay objects. If true, removes everything
-        including weather data. 
+        including weather data.
       </description>
       <type>Boolean</type>
       <required>true</required>
