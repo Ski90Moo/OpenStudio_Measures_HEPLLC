@@ -1,22 +1,22 @@
-<?xml version='1.0'?>
+<?xml version='1.0'?> 
 <measure>
   <schema_version>3.1</schema_version>
   <name>create_custom_space_types_from_csv</name>
   <uid>acfec2f3-3a0e-4995-9bc9-e7d0042b4145</uid>
   <version_id>d7cf860b-6500-4b5d-bf61-8cb7ef558835</version_id>
-  <version_modified>2026-03-02T09:15:38Z</version_modified>
-  <xml_checksum>93E34EB6</xml_checksum>
+  <version_modified>2026-03-02T09:20:07Z</version_modified>
+  <xml_checksum>54F184B5</xml_checksum>
   <class_name>CreateCustomSpaceTypesFromCSV</class_name>
   <display_name>Create Custom Space Types From CSV</display_name>
   <description>
-    The user can enter custom data into a space type csv file and a schedules
-    csv file. From these, the measure generates the requested space types.
+     The user can enter custom data into a space type csv file and a schedules
+    csv file. From these, the measure generates the requested space types. 
   </description>
   <modeler_description>
-    The user can enter custom data into a space type csv file and a schedules
+     The user can enter custom data into a space type csv file and a schedules
     csv file. From these, the measure generates the requested space types. Key
     information is identified with the OS: and !- tags; these columns must be
-    completed in order for the measure to run.
+    completed in order for the measure to run. 
   </modeler_description>
   <arguments>
     <argument>
