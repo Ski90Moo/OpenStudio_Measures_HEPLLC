@@ -1,0 +1,177 @@
+<?xml version='1.0'?> 
+<measure>
+  <schema_version>3.1</schema_version>
+  <name>set_ideal_air_loads_to_control_humidity</name>
+  <uid>f868dd22-85e0-4f7a-8f81-42fa95daa74f</uid>
+  <version_id>49868c92-78cd-491d-a12e-25ff654ff7a7</version_id>
+  <version_modified>2026-05-18T18:11:46Z</version_modified>
+  <xml_checksum>F4EB7340</xml_checksum>
+  <class_name>SetIdealAirLoadsToControlHumidity</class_name>
+  <display_name>Set IdealAirLoads to Control Humidity</display_name>
+  <description>
+     Configures humidity controls on the HVACTemplate:Zone:IdealLoadsAirSystem
+    for a specified thermal zone. Reads the zone's ZoneControl:Humidistat,
+    computes daily average setpoints from its humidifying and dehumidifying
+    schedules, and applies them along with the user-selected control types to
+    the ideal loads object. Dehumidification supports Humidistat,
+    ConstantSensibleHeatRatio, ConstantSupplyHumidityRatio, and None.
+    Humidification supports Humidistat, ConstantSupplyHumidityRatio, and None.
+    The humidistat object and its referenced schedules are deleted from the
+    model after processing. 
+  </description>
+  <modeler_description>
+     Locates ZoneControl:Humidistat for the specified zone and traces its
+    humidifying and dehumidifying schedule references through the Schedule:Year
+    to Schedule:Week:Daily to Schedule:Day:Interval/Hourly chain to compute a
+    daily weighted average for each setpoint. The averages are written to the
+    Humidification Setpoint and Dehumidification Setpoint fields of
+    HVACTemplate:Zone:IdealLoadsAirSystem. When ConstantSupplyHumidityRatio is
+    selected, the Minimum Cooling Supply Humidity Ratio or Maximum Heating
+    Supply Humidity Ratio field is set from the user-supplied humidity ratio
+    value. The ZoneControl:Humidistat and its referenced schedule objects are
+    then removed from the workspace. LIMITATION: The IdealLoadsAirSystem
+    Humidistat dehumidification control is simplified—it is not a full
+    dehumidification-with-reheat system and therefore will not provide accurate
+    accounting of energy use for humidity control. 
+  </modeler_description>
+  <arguments>
+    <argument>
+      <name>thermal_zone_name</name>
+      <display_name>Thermal Zone Name</display_name>
+      <description>Enter the exact thermal zone name (e.g., TZ:01-FCU-29B-BAKERY-DINING)</description>
+      <type>String</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>TZ:01-FCU-29B-BAKERY-DINING</default_value>
+    </argument>
+    <argument>
+      <name>ideal_loads_dehumidification_control_type</name>
+      <display_name>Dehumidification Control Type (Ideal Loads)</display_name>
+      <description>
+         Enter: ConstantSensibleHeatRatio, Humidistat,
+        ConstantSupplyHumidityRatio, or None 
+      </description>
+      <type>String</type>
+      <required>false</required>
+      <model_dependent>false</model_dependent>
+      <default_value>Humidistat</default_value>
+    </argument>
+    <argument>
+      <name>ideal_loads_humidification_control_type</name>
+      <display_name>Humidification Control Type (Ideal Loads)</display_name>
+      <description>Enter: Humidistat, ConstantSupplyHumidityRatio, or None</description>
+      <type>String</type>
+      <required>false</required>
+      <model_dependent>false</model_dependent>
+      <default_value>Humidistat</default_value>
+    </argument>
+    <argument>
+      <name>dehumidification_supply_humidity_ratio</name>
+      <display_name>Dehumidification Constant Supply Humidity Ratio (kgWater/kgDryAir)</display_name>
+      <description>
+         Used when Dehumidification Control Type is ConstantSupplyHumidityRatio.
+        Sets Minimum Cooling Supply Humidity Ratio. 
+      </description>
+      <type>Double</type>
+      <required>false</required>
+      <model_dependent>false</model_dependent>
+      <default_value>0.008</default_value>
+    </argument>
+    <argument>
+      <name>humidification_supply_humidity_ratio</name>
+      <display_name>Humidification Constant Supply Humidity Ratio (kgWater/kgDryAir)</display_name>
+      <description>
+         Used when Humidification Control Type is ConstantSupplyHumidityRatio.
+        Sets Maximum Heating Supply Humidity Ratio. 
+      </description>
+      <type>Double</type>
+      <required>false</required>
+      <model_dependent>false</model_dependent>
+      <default_value>0.008</default_value>
+    </argument>
+  </arguments>
+  <outputs/>
+  <provenances/>
+  <tags>
+    <tag>HVAC.HVAC Controls</tag>
+  </tags>
+  <attributes>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>OpenStudio Application</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>Parametric Analysis Tool</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Use Case</name>
+      <value>Model Articulation</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Measure Type</name>
+      <value>EnergyPlusMeasure</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Measure Language</name>
+      <value>Ruby</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>OpenStudio Application</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>Parametric Analysis Tool</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Use Case</name>
+      <value>Model Articulation</value>
+      <datatype>string</datatype>
+    </attribute>
+  </attributes>
+  <files>
+    <file>
+      <filename>LICENSE.md</filename>
+      <filetype>md</filetype>
+      <usage_type>license</usage_type>
+      <checksum>CD7F5672</checksum>
+    </file>
+    <file>
+      <filename>README.md</filename>
+      <filetype>md</filetype>
+      <usage_type>readme</usage_type>
+      <checksum>FD6DDFDC</checksum>
+    </file>
+    <file>
+      <filename>README.md.erb</filename>
+      <filetype>erb</filetype>
+      <usage_type>readmeerb</usage_type>
+      <checksum>F1C26127</checksum>
+    </file>
+    <file>
+      <version>
+        <software_program>OpenStudio</software_program>
+        <identifier>3.1.0</identifier>
+        <min_compatible>3.1.0</min_compatible>
+      </version>
+      <filename>measure.rb</filename>
+      <filetype>rb</filetype>
+      <usage_type>script</usage_type>
+      <checksum>CF5FF9AE</checksum>
+    </file>
+    <file>
+      <filename>set_ideal_air_loads_to_control_humidity_test.rb</filename>
+      <filetype>rb</filetype>
+      <usage_type>test</usage_type>
+      <checksum>A5A64FBD</checksum>
+    </file>
+  </files>
+</measure>
