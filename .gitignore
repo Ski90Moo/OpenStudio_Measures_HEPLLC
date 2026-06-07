@@ -1,5 +1,12 @@
 *.gem
 *.rbc
+
+# Local checksum-update tooling (not part of any measure)
+update_measure_checksums.py
+
+# Local Claude Code project guidance (not for sharing)
+CLAUDE.md
+
 /.config
 /coverage/
 /InstalledFiles

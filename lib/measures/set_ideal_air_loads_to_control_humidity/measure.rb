@@ -40,10 +40,10 @@ class SetIdealAirLoadsToControlHumidity < OpenStudio::Measure::EnergyPlusMeasure
     return "Set IdealAirLoads to Control Humidity"
   end
   def description
-    return "Configures humidity controls on the HVACTemplate:Zone:IdealLoadsAirSystem for a specified thermal zone. Reads the zone's ZoneControl:Humidistat, computes daily average setpoints from its humidifying and dehumidifying schedules, and applies them along with the user-selected control types to the ideal loads object. Dehumidification supports Humidistat, ConstantSensibleHeatRatio, ConstantSupplyHumidityRatio, and None. Humidification supports Humidistat, ConstantSupplyHumidityRatio, and None. The humidistat object and its referenced schedules are deleted from the model after processing."
+    return "Configures humidity controls on the HVACTemplate:Zone:IdealLoadsAirSystem for a specified thermal zone. Reads the zone's ZoneControl:Humidistat, computes daily average setpoints from its humidifying and dehumidifying schedules, and applies them along with the user-selected control types to the ideal loads object. Dehumidification supports Humidistat, ConstantSensibleHeatRatio, ConstantSupplyHumidityRatio, and None. Humidification supports Humidistat, ConstantSupplyHumidityRatio, and None. If the user selects Yes for Delete ZoneControl:Humidistat, the humidistat object is deleted from the model after processing; its referenced schedules are left in place.."
   end
   def modeler_description
-    return "Locates ZoneControl:Humidistat for the specified zone and traces its humidifying and dehumidifying schedule references through the Schedule:Year to Schedule:Week:Daily to Schedule:Day:Interval/Hourly chain to compute a daily weighted average for each setpoint. The averages are written to the Humidification Setpoint and Dehumidification Setpoint fields of HVACTemplate:Zone:IdealLoadsAirSystem. When ConstantSupplyHumidityRatio is selected, the Minimum Cooling Supply Humidity Ratio or Maximum Heating Supply Humidity Ratio field is set from the user-supplied humidity ratio value. The ZoneControl:Humidistat and its referenced schedule objects are then removed from the workspace. LIMITATION: The IdealLoadsAirSystem Humidistat dehumidification control is simplified—it is not a full dehumidification-with-reheat system and therefore will not provide accurate accounting of energy use for humidity control."
+    return "Locates ZoneControl:Humidistat for the specified zone and traces its humidifying and dehumidifying schedule references through the Schedule:Year to Schedule:Week:Daily to Schedule:Day:Interval/Hourly chain to compute a daily weighted average for each setpoint. The averages are written to the Humidification Setpoint and Dehumidification Setpoint fields of HVACTemplate:Zone:IdealLoadsAirSystem. When ConstantSupplyHumidityRatio is selected, the Minimum Cooling Supply Humidity Ratio or Maximum Heating Supply Humidity Ratio field is set from the user-supplied humidity ratio value. When Dehumidification Control Type is ConstantSensibleHeatRatio, the Cooling Sensible Heat Ratio field is set from the user-supplied value. If Delete ZoneControl:Humidistat is set to Yes, the ZoneControl:Humidistat object for the zone is then removed from the workspace (its referenced schedules are left untouched); if set to No, the humidistat object is left in place. NOTE: As of EnergyPlus 25.1, the ZoneControl:Humidistat must be deleted so as not to conflict with the EnergyPlus ExpandObjects.  Also note the ExpandObjects will replace any schedules with constant 60% Dehumidification and 30% Humidification schedules. LIMITATION: The IdealLoadsAirSystem Humidistat dehumidification control is simplified—it is not a full dehumidification-with-reheat system and therefore will not provide accurate accounting of energy use for humidity control."
   end
 
   def arguments(workspace)
@@ -55,15 +55,24 @@ class SetIdealAirLoadsToControlHumidity < OpenStudio::Measure::EnergyPlusMeasure
     thermal_zone_name.setDefaultValue('TZ:01-FCU-29B-BAKERY-DINING')
     args << thermal_zone_name
 
-    ideal_loads_dehumid_control_type = OpenStudio::Measure::OSArgument.makeStringArgument('ideal_loads_dehumidification_control_type', false)
+    dehumid_control_choices = OpenStudio::StringVector.new
+    dehumid_control_choices << 'ConstantSensibleHeatRatio'
+    dehumid_control_choices << 'Humidistat'
+    dehumid_control_choices << 'ConstantSupplyHumidityRatio'
+    dehumid_control_choices << 'None'
+    ideal_loads_dehumid_control_type = OpenStudio::Measure::OSArgument.makeChoiceArgument('ideal_loads_dehumidification_control_type', dehumid_control_choices, true)
     ideal_loads_dehumid_control_type.setDisplayName('Dehumidification Control Type (Ideal Loads)')
-    ideal_loads_dehumid_control_type.setDescription('Enter: ConstantSensibleHeatRatio, Humidistat, ConstantSupplyHumidityRatio, or None')
+    ideal_loads_dehumid_control_type.setDescription('Select the dehumidification control type for the IdealLoadsAirSystem.')
     ideal_loads_dehumid_control_type.setDefaultValue('Humidistat')
     args << ideal_loads_dehumid_control_type
 
-    ideal_loads_humid_control_type = OpenStudio::Measure::OSArgument.makeStringArgument('ideal_loads_humidification_control_type', false)
+    humid_control_choices = OpenStudio::StringVector.new
+    humid_control_choices << 'Humidistat'
+    humid_control_choices << 'ConstantSupplyHumidityRatio'
+    humid_control_choices << 'None'
+    ideal_loads_humid_control_type = OpenStudio::Measure::OSArgument.makeChoiceArgument('ideal_loads_humidification_control_type', humid_control_choices, true)
     ideal_loads_humid_control_type.setDisplayName('Humidification Control Type (Ideal Loads)')
-    ideal_loads_humid_control_type.setDescription('Enter: Humidistat, ConstantSupplyHumidityRatio, or None')
+    ideal_loads_humid_control_type.setDescription('Select the humidification control type for the IdealLoadsAirSystem.')
     ideal_loads_humid_control_type.setDefaultValue('Humidistat')
     args << ideal_loads_humid_control_type
 
@@ -73,11 +82,26 @@ class SetIdealAirLoadsToControlHumidity < OpenStudio::Measure::EnergyPlusMeasure
     dehumid_supply_hr.setDefaultValue(0.008)
     args << dehumid_supply_hr
 
+    cooling_shr = OpenStudio::Measure::OSArgument.makeDoubleArgument('cooling_sensible_heat_ratio', false)
+    cooling_shr.setDisplayName('Cooling Sensible Heat Ratio (dimensionless)')
+    cooling_shr.setDescription('Used when Dehumidification Control Type is ConstantSensibleHeatRatio. Sets Cooling Sensible Heat Ratio.')
+    cooling_shr.setDefaultValue(0.7)
+    args << cooling_shr
+
     humid_supply_hr = OpenStudio::Measure::OSArgument.makeDoubleArgument('humidification_supply_humidity_ratio', false)
     humid_supply_hr.setDisplayName('Humidification Constant Supply Humidity Ratio (kgWater/kgDryAir)')
     humid_supply_hr.setDescription('Used when Humidification Control Type is ConstantSupplyHumidityRatio. Sets Maximum Heating Supply Humidity Ratio.')
     humid_supply_hr.setDefaultValue(0.008)
     args << humid_supply_hr
+
+    yes_no_choices = OpenStudio::StringVector.new
+    yes_no_choices << 'Yes'
+    yes_no_choices << 'No'
+    delete_humidistat = OpenStudio::Measure::OSArgument.makeChoiceArgument('delete_humidistat', yes_no_choices, true)
+    delete_humidistat.setDisplayName('Delete ZoneControl:Humidistat for the Thermal Zone')
+    delete_humidistat.setDescription('If Yes, the ZoneControl:Humidistat object found for the thermal zone is deleted from the model after processing.')
+    delete_humidistat.setDefaultValue('Yes')
+    args << delete_humidistat
 
     return args
   end
@@ -90,10 +114,12 @@ class SetIdealAirLoadsToControlHumidity < OpenStudio::Measure::EnergyPlusMeasure
     end
 
     thermal_zone_name = runner.getStringArgumentValue('thermal_zone_name', user_arguments)
-    ideal_loads_dehumid_control_type = runner.getOptionalStringArgumentValue('ideal_loads_dehumidification_control_type', user_arguments)
-    ideal_loads_humid_control_type = runner.getOptionalStringArgumentValue('ideal_loads_humidification_control_type', user_arguments)
+    ideal_loads_dehumid_control_type = runner.getStringArgumentValue('ideal_loads_dehumidification_control_type', user_arguments)
+    ideal_loads_humid_control_type = runner.getStringArgumentValue('ideal_loads_humidification_control_type', user_arguments)
     dehumid_supply_hr = runner.getOptionalDoubleArgumentValue('dehumidification_supply_humidity_ratio', user_arguments)
     humid_supply_hr   = runner.getOptionalDoubleArgumentValue('humidification_supply_humidity_ratio', user_arguments)
+    cooling_shr       = runner.getOptionalDoubleArgumentValue('cooling_sensible_heat_ratio', user_arguments)
+    delete_humidistat = runner.getStringArgumentValue('delete_humidistat', user_arguments)
 
     # ========== STEP 1: Find ZoneControl:Humidistat for the thermal zone ==========
 
@@ -166,6 +192,7 @@ class SetIdealAirLoadsToControlHumidity < OpenStudio::Measure::EnergyPlusMeasure
       humid_setpoint_index     = nil
       min_cooling_hr_index     = nil
       max_heating_hr_index     = nil
+      cooling_shr_index        = nil
 
       for i in 0...idd_object.numFields
         field_optional = idd_object.getField(i)
@@ -177,21 +204,22 @@ class SetIdealAirLoadsToControlHumidity < OpenStudio::Measure::EnergyPlusMeasure
         when 'Humidification Setpoint'             then humid_setpoint_index   = i
         when 'Minimum Cooling Supply Humidity Ratio' then min_cooling_hr_index = i
         when 'Maximum Heating Supply Humidity Ratio' then max_heating_hr_index = i
+        when 'Cooling Sensible Heat Ratio'          then cooling_shr_index     = i
         end
       end
 
       if dehumid_control_index.nil?
         runner.registerWarning("Could not find 'Dehumidification Control Type' field in HVACTemplate:Zone:IdealLoadsAirSystem")
-      elsif ideal_loads_dehumid_control_type.is_initialized && !ideal_loads_dehumid_control_type.get.empty?
-        ideal_loads_object.setString(dehumid_control_index, ideal_loads_dehumid_control_type.get)
-        runner.registerInfo("  - Dehumidification Control Type set to: #{ideal_loads_dehumid_control_type.get}")
+      else
+        ideal_loads_object.setString(dehumid_control_index, ideal_loads_dehumid_control_type)
+        runner.registerInfo("  - Dehumidification Control Type set to: #{ideal_loads_dehumid_control_type}")
       end
 
       if humid_control_index.nil?
         runner.registerWarning("Could not find 'Humidification Control Type' field in HVACTemplate:Zone:IdealLoadsAirSystem")
-      elsif ideal_loads_humid_control_type.is_initialized && !ideal_loads_humid_control_type.get.empty?
-        ideal_loads_object.setString(humid_control_index, ideal_loads_humid_control_type.get)
-        runner.registerInfo("  - Humidification Control Type set to: #{ideal_loads_humid_control_type.get}")
+      else
+        ideal_loads_object.setString(humid_control_index, ideal_loads_humid_control_type)
+        runner.registerInfo("  - Humidification Control Type set to: #{ideal_loads_humid_control_type}")
       end
 
       if dehumid_setpoint_index.nil?
@@ -208,7 +236,7 @@ class SetIdealAirLoadsToControlHumidity < OpenStudio::Measure::EnergyPlusMeasure
         runner.registerInfo("  - Humidification Setpoint set to: #{humidifying_setpoint.round(1)}%")
       end
 
-      if ideal_loads_dehumid_control_type.is_initialized && ideal_loads_dehumid_control_type.get == 'ConstantSupplyHumidityRatio'
+      if ideal_loads_dehumid_control_type == 'ConstantSupplyHumidityRatio'
         if min_cooling_hr_index.nil?
           runner.registerWarning("Could not find 'Minimum Cooling Supply Humidity Ratio' field in HVACTemplate:Zone:IdealLoadsAirSystem")
         elsif dehumid_supply_hr.is_initialized
@@ -217,7 +245,16 @@ class SetIdealAirLoadsToControlHumidity < OpenStudio::Measure::EnergyPlusMeasure
         end
       end
 
-      if ideal_loads_humid_control_type.is_initialized && ideal_loads_humid_control_type.get == 'ConstantSupplyHumidityRatio'
+      if ideal_loads_dehumid_control_type == 'ConstantSensibleHeatRatio'
+        if cooling_shr_index.nil?
+          runner.registerWarning("Could not find 'Cooling Sensible Heat Ratio' field in HVACTemplate:Zone:IdealLoadsAirSystem")
+        elsif cooling_shr.is_initialized
+          ideal_loads_object.setDouble(cooling_shr_index, cooling_shr.get)
+          runner.registerInfo("  - Cooling Sensible Heat Ratio set to: #{cooling_shr.get}")
+        end
+      end
+
+      if ideal_loads_humid_control_type == 'ConstantSupplyHumidityRatio'
         if max_heating_hr_index.nil?
           runner.registerWarning("Could not find 'Maximum Heating Supply Humidity Ratio' field in HVACTemplate:Zone:IdealLoadsAirSystem")
         elsif humid_supply_hr.is_initialized
@@ -229,34 +266,15 @@ class SetIdealAirLoadsToControlHumidity < OpenStudio::Measure::EnergyPlusMeasure
       runner.registerInfo("Successfully modified HVACTemplate:Zone:IdealLoadsAirSystem for zone '#{thermal_zone_name}'.")
     end
 
-    # ========== STEP 4: Delete ZoneControl:Humidistat and its schedules ==========
+    # ========== STEP 4: Delete ZoneControl:Humidistat for the thermal zone ==========
 
-    handles_to_remove = [humidistat.handle]
-
-    all_schedules = []
-    all_schedules.concat(workspace.getObjectsByType('Schedule:Compact'.to_IddObjectType))
-    all_schedules.concat(workspace.getObjectsByType('Schedule:Constant'.to_IddObjectType))
-    all_schedules.concat(workspace.getObjectsByType('Schedule:File'.to_IddObjectType))
-    all_schedules.concat(workspace.getObjectsByType('Schedule:Year'.to_IddObjectType))
-    all_schedules.concat(workspace.getObjectsByType('Schedule:Week:Daily'.to_IddObjectType))
-    all_schedules.concat(workspace.getObjectsByType('Schedule:Week:Compact'.to_IddObjectType))
-    all_schedules.concat(workspace.getObjectsByType('Schedule:Day:Hourly'.to_IddObjectType))
-    all_schedules.concat(workspace.getObjectsByType('Schedule:Day:Interval'.to_IddObjectType))
-    all_schedules.concat(workspace.getObjectsByType('Schedule:Day:List'.to_IddObjectType))
-
-    [humidifying_schedule_name, dehumidifying_schedule_name].each do |sched_name|
-      next if sched_name.empty?
-      all_schedules.each do |sched|
-        if sched.getString(0).to_s.strip == sched_name
-          handles_to_remove << sched.handle
-          runner.registerInfo("  Queued for deletion: schedule '#{sched_name}'")
-          break
-        end
-      end
+    if delete_humidistat == 'Yes'
+      humidistat_name = humidistat.getString(0).to_s
+      workspace.removeObjects([humidistat.handle])
+      runner.registerInfo("Deleted ZoneControl:Humidistat '#{humidistat_name}' for zone '#{thermal_zone_name}'.")
+    else
+      runner.registerInfo("Skipping deletion of ZoneControl:Humidistat '#{humidistat.getString(0)}' for zone '#{thermal_zone_name}' (delete_humidistat = 'No').")
     end
-
-    workspace.removeObjects(handles_to_remove)
-    runner.registerInfo("Deleted ZoneControl:Humidistat '#{humidistat.getString(0)}' and its associated schedules.")
 
     runner.registerFinalCondition("Measure complete for zone '#{thermal_zone_name}'. " \
       "Humidification Setpoint: #{humidifying_setpoint ? "#{humidifying_setpoint.round(1)}%" : 'not set'}. " \
