@@ -727,6 +727,9 @@ class CreateCustomSpaceTypesFromCSV < OpenStudio::Measure::ModelMeasure
     rgb_b_uuid = '35292a8f-2c31-428e-b12b-ecb42e41f30c'
     space_type_name_uuid = 'c318426a-e0cf-4c00-830e-9470f81507bb'
     schedule_set_name_uuid = '36715673-fabf-4b26-bcb3-54efccbcf6ca'
+    standards_template_uuid = '464b7a91-abc0-48af-b607-07922fa703df'
+    standards_building_type_uuid = '789d7a7f-91a3-4dde-9310-9a74c14d32e5'
+    standards_space_type_uuid = 'c3101f12-7b66-41ad-90b5-0c5afec65227'
     
     # People UUIDs
     people_name_uuid = '0e52365f-0968-4865-98c8-5a391db72fe1'
@@ -772,6 +775,21 @@ class CreateCustomSpaceTypesFromCSV < OpenStudio::Measure::ModelMeasure
     infil_flow_per_area_uuid = '821df950-1005-42a1-bb71-94e21d06f843'
     infil_schedule_uuid = '94e29b50-ba90-424a-98b8-c2dc37ad1d28'
 
+    # Internal Mass UUIDs
+    im_surface_area_uuid = '620be5d0-583e-43e9-b3de-0b70c7cf5176'
+    im_surface_area_per_floor_area_uuid = '953b161f-1acf-4fc3-a393-bdce6b3c5153'
+    im_surface_area_per_person_uuid = 'b80aad76-63a0-4cbf-802e-5e89b172c4f9'
+    im_roughness_uuid = '1bd0cfbf-ead3-4e72-b15b-e4980f9b59db'
+    im_thickness_uuid = 'dc1f4078-c6b5-4ccb-a537-4da64d413107'
+    im_conductivity_uuid = 'cff5961c-e380-4d30-9a4d-0bfdf353115f'
+    im_density_uuid = '5a6d7588-d7ab-4a8a-be29-d0e69477a2d9'
+    im_specific_heat_uuid = '51ff4529-089d-43c6-90c4-e6bdcb13b9fe'
+    im_thermal_absorptance_uuid = 'dc5451c6-9cf1-4680-bb77-8c264cd2f1ec'
+    im_solar_absorptance_uuid = '50e1157d-9579-4ef9-b50e-099cefad7e0f'
+    im_visible_absorptance_uuid = '2810bb86-71f1-4ece-94e6-b7427b2274ef'
+    im_material_name_uuid = 'feb23d72-7ec3-4505-84ec-987e02009258'
+    im_def_name_uuid = '65c47774-d0bf-4ce9-ba77-1b1304459dc7'
+
     # Counter for created space types
     space_types_created = 0
     rows_skipped = 0
@@ -810,6 +828,16 @@ class CreateCustomSpaceTypesFromCSV < OpenStudio::Measure::ModelMeasure
         rendering_color.setRenderingBlueValue(b.to_i)
         space_type.setRenderingColor(rendering_color)
       end
+
+      # Set Standards Template, Standards Building Type, and Standards Space Type
+      standards_template = get_value_by_uuid(row, headers, standards_template_uuid)
+      space_type.setStandardsTemplate(standards_template) if !standards_template.nil?
+
+      standards_building_type = get_value_by_uuid(row, headers, standards_building_type_uuid)
+      space_type.setStandardsBuildingType(standards_building_type) if !standards_building_type.nil?
+
+      standards_space_type = get_value_by_uuid(row, headers, standards_space_type_uuid)
+      space_type.setStandardsSpaceType(standards_space_type) if !standards_space_type.nil?
 
       # Create DefaultScheduleSet
       schedule_set_name = get_value_by_uuid(row, headers, schedule_set_name_uuid)
@@ -1071,6 +1099,69 @@ class CreateCustomSpaceTypesFromCSV < OpenStudio::Measure::ModelMeasure
         end
 
         runner.registerInfo("  Created Infiltration: #{infil_name}")
+      end
+
+      # H. Create Internal Mass Definition, Material, and Internal Mass instance
+      im_def_name = get_value_by_uuid(row, headers, im_def_name_uuid)
+      if !im_def_name.nil?
+        material_name = get_value_by_uuid(row, headers, im_material_name_uuid)
+
+        # Create the OS:Material (opaque material layer)
+        material = OpenStudio::Model::StandardOpaqueMaterial.new(model)
+        material.setName(material_name) if !material_name.nil?
+
+        roughness = get_value_by_uuid(row, headers, im_roughness_uuid)
+        material.setRoughness(roughness) if !roughness.nil?
+
+        thickness = get_value_by_uuid(row, headers, im_thickness_uuid)
+        material.setThickness(thickness.to_f) if !thickness.nil?
+
+        conductivity = get_value_by_uuid(row, headers, im_conductivity_uuid)
+        material.setConductivity(conductivity.to_f) if !conductivity.nil?
+
+        density = get_value_by_uuid(row, headers, im_density_uuid)
+        material.setDensity(density.to_f) if !density.nil?
+
+        specific_heat = get_value_by_uuid(row, headers, im_specific_heat_uuid)
+        material.setSpecificHeat(specific_heat.to_f) if !specific_heat.nil?
+
+        thermal_absorptance = get_value_by_uuid(row, headers, im_thermal_absorptance_uuid)
+        material.setThermalAbsorptance(thermal_absorptance.to_f) if !thermal_absorptance.nil?
+
+        solar_absorptance = get_value_by_uuid(row, headers, im_solar_absorptance_uuid)
+        material.setSolarAbsorptance(solar_absorptance.to_f) if !solar_absorptance.nil?
+
+        visible_absorptance = get_value_by_uuid(row, headers, im_visible_absorptance_uuid)
+        material.setVisibleAbsorptance(visible_absorptance.to_f) if !visible_absorptance.nil?
+
+        # Wrap the material in a Construction (required by OS:InternalMass:Definition)
+        construction = OpenStudio::Model::Construction.new(model)
+        construction.setName("Construction #{material_name}")
+        construction.insertLayer(0, material)
+
+        # Create Internal Mass Definition
+        im_def = OpenStudio::Model::InternalMassDefinition.new(model)
+        im_def.setName(im_def_name)
+        im_def.setConstruction(construction)
+
+        surface_area = get_value_by_uuid(row, headers, im_surface_area_uuid)
+        surface_area_per_floor_area = get_value_by_uuid(row, headers, im_surface_area_per_floor_area_uuid)
+        surface_area_per_person = get_value_by_uuid(row, headers, im_surface_area_per_person_uuid)
+
+        if !surface_area.nil?
+          im_def.setSurfaceArea(surface_area.to_f)
+        elsif !surface_area_per_floor_area.nil?
+          im_def.setSurfaceAreaperSpaceFloorArea(surface_area_per_floor_area.to_f)
+        elsif !surface_area_per_person.nil?
+          im_def.setSurfaceAreaperPerson(surface_area_per_person.to_f)
+        end
+
+        # Create Internal Mass instance and assign to the space type
+        internal_mass = OpenStudio::Model::InternalMass.new(im_def)
+        internal_mass.setName("#{space_type_name}_InternalMass")
+        internal_mass.setSpaceType(space_type)
+
+        runner.registerInfo("  Created Internal Mass: #{im_def_name}")
       end
 
       space_types_created += 1
