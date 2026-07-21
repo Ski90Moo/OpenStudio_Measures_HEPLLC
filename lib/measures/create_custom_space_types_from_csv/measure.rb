@@ -4,6 +4,7 @@
 # http://nrel.github.io/OpenStudio-user-documentation/reference/measure_writing_guide/
 
 require 'csv'
+require 'date'
 
 # start the measure
 class CreateCustomSpaceTypesFromCSV < OpenStudio::Measure::ModelMeasure
@@ -93,6 +94,30 @@ class CreateCustomSpaceTypesFromCSV < OpenStudio::Measure::ModelMeasure
     return optimized
   end
 
+  # Helper method to parse a schedule Start/End Date cell into [month_num, day_string].
+  # Handles "Jan-1"/"1-Jan" text formats as well as raw Excel serial date numbers
+  # (e.g. "41640") - Excel stores dates as serials internally, and cells not given
+  # an explicit "mmm-d" display format export to CSV as the bare serial number.
+  def parse_month_day(date_str, month_map)
+    str = date_str.to_s.strip
+    return [nil, nil] if str.empty?
+
+    if str.match?(/\A\d+\z/)
+      date = ::Date.new(1899, 12, 30) + str.to_i
+      return [date.month, date.day.to_s]
+    end
+
+    parts = str.split('-')
+    return [nil, nil] unless parts.length == 2
+
+    if month_map.key?(parts[0])
+      month_name, day = parts[0], parts[1]
+    else
+      day, month_name = parts[0], parts[1]
+    end
+    [month_map[month_name], day]
+  end
+
   # Helper method to create schedule from Schedules.csv
   def create_schedule_from_csv(model, runner, schedule_name, schedules_data, created_schedules)
     # Check if schedule already created
@@ -149,53 +174,20 @@ class CreateCustomSpaceTypesFromCSV < OpenStudio::Measure::ModelMeasure
         next
       end
       
-      # Parse dates - handle both "Jan-1" and "1-Jan" formats
-      start_parts = start_date_str.to_s.split('-')
-      end_parts = end_date_str.to_s.split('-')
-      
       # Map month names to numbers
       month_map = {
         'Jan' => 1, 'Feb' => 2, 'Mar' => 3, 'Apr' => 4, 'May' => 5, 'Jun' => 6,
         'Jul' => 7, 'Aug' => 8, 'Sep' => 9, 'Oct' => 10, 'Nov' => 11, 'Dec' => 12
       }
-      
-      # Detect format: if first part is in month_map, it's Month-Day, otherwise Day-Month
-      if start_parts.length == 2
-        if month_map.key?(start_parts[0])
-          # Format: Month-Day (e.g., "Jan-1")
-          start_month = start_parts[0]
-          start_day = start_parts[1]
-        else
-          # Format: Day-Month (e.g., "1-Jan")
-          start_day = start_parts[0]
-          start_month = start_parts[1]
-        end
-      else
-        start_month = nil
-        start_day = nil
-      end
-      
-      if end_parts.length == 2
-        if month_map.key?(end_parts[0])
-          # Format: Month-Day (e.g., "Dec-31")
-          end_month = end_parts[0]
-          end_day = end_parts[1]
-        else
-          # Format: Day-Month (e.g., "31-Dec")
-          end_day = end_parts[0]
-          end_month = end_parts[1]
-        end
-      else
-        end_month = nil
-        end_day = nil
-      end
-      
-      start_month_num = month_map[start_month]
-      end_month_num = month_map[end_month]
-      
+
+      # Parse dates - handles "Jan-1"/"1-Jan" text formats and raw Excel serial
+      # date numbers (both appear in Schedules_master.csv depending on cell format)
+      start_month_num, start_day = parse_month_day(start_date_str, month_map)
+      end_month_num, end_day = parse_month_day(end_date_str, month_map)
+
       # Check if dates are valid (check for nil or empty)
-      start_day_valid = !start_day.nil? && !start_day.empty?
-      end_day_valid = !end_day.nil? && !end_day.empty?
+      start_day_valid = !start_day.nil? && !start_day.to_s.empty?
+      end_day_valid = !end_day.nil? && !end_day.to_s.empty?
       dates_valid = !start_month_num.nil? && !end_month_num.nil? && start_day_valid && end_day_valid
       
       # Validate dates (needed for ScheduleRules, not for Default day type)

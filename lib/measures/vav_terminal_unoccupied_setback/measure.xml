@@ -4,8 +4,8 @@
   <name>vav_terminal_unoccupied_setback</name>
   <uid>f3a1b2c4-d5e6-4789-abcd-012345678901</uid>
   <version_id>649f735e-d1e2-4120-9636-423cd3017ac0</version_id>
-  <version_modified>2026-06-23T07:28:34Z</version_modified>
-  <xml_checksum>6D9D4C75</xml_checksum>
+  <version_modified>2026-07-21T06:47:56Z</version_modified>
+  <xml_checksum>E7242CA8</xml_checksum>
   <class_name>VAVTerminalUnoccupiedSetback</class_name>
   <display_name>VAV Terminal Unoccupied Setback</display_name>
   <description>

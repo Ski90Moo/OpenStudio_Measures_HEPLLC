@@ -4,7 +4,7 @@
   <name>create_custom_space_types_from_csv</name>
   <uid>acfec2f3-3a0e-4995-9bc9-e7d0042b4145</uid>
   <version_id>d7cf860b-6500-4b5d-bf61-8cb7ef558835</version_id>
-  <version_modified>2026-07-11T17:15:49Z</version_modified>
+  <version_modified>2026-07-21T06:47:55Z</version_modified>
   <xml_checksum>DA9B70B4</xml_checksum>
   <class_name>CreateCustomSpaceTypesFromCSV</class_name>
   <display_name>Create Custom Space Types From CSV</display_name>
@@ -109,7 +109,7 @@
       <filename>measure.rb</filename>
       <filetype>rb</filetype>
       <usage_type>script</usage_type>
-      <checksum>6042EF57</checksum>
+      <checksum>4FDD1A15</checksum>
     </file>
     <file>
       <filename>Schedules.csv</filename>

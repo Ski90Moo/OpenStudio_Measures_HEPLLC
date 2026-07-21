@@ -4,8 +4,8 @@
   <name>apply_shading_properties_to_all</name>
   <uid>48a622c2-2d5f-4167-a7e7-daba2c9480c1</uid>
   <version_id>94c5b9f0-6155-4f42-8dbc-08d6a324a035</version_id>
-  <version_modified>2026-06-16T09:02:05Z</version_modified>
-  <xml_checksum>6205D285</xml_checksum>
+  <version_modified>2026-07-21T06:47:54Z</version_modified>
+  <xml_checksum>42829EC4</xml_checksum>
   <class_name>ApplyShadingPropertiesToAll</class_name>
   <display_name>Apply Shading Properties To All Site and Building Shading Surfaces</display_name>
   <description>
