@@ -1,0 +1,173 @@
+<?xml version='1.0'?>
+<measure>
+  <schema_version>3.1</schema_version>
+  <name>hot_water_supply_outdoor_air_reset</name>
+  <uid>84537048-4647-4a4d-a17b-dd43a19b233e</uid>
+  <version_id>5d3e8d86-3849-4af0-9199-a50f5dae06a0</version_id>
+  <version_modified>2026-10-11T17:58:47Z</version_modified>
+  <xml_checksum>E673649D</xml_checksum>
+  <class_name>HotWaterSupplyOutdoorAirReset</class_name>
+  <display_name>Hot Water Supply Outdoor Air Reset</display_name>
+  <description>
+    Replaces the supply temperature control on a hot water loop, for space
+    heating or service water, with an outdoor air reset. The supply water
+    temperature is held at a high value in cold weather, at a low value in mild
+    weather, and varies linearly in between. All four reset points are entered
+    in degrees F.
+  </description>
+  <modeler_description>
+    Finds the selected PlantLoop and removes every setpoint manager on its
+    supply outlet node, then adds a SetpointManagerOutdoorAirReset (control
+    variable Temperature) there. Inputs in deg F are converted to deg C. Only
+    the supply outlet node is changed: setpoint managers on component outlet
+    nodes, such as a boiler's own outlet, are left as they are and listed in the
+    output. Sizing:Plant is not changed. The measure warns if the loop is not
+    sized as a Heating loop, or if the reset runs backward (a higher supply
+    temperature in mild weather).
+  </modeler_description>
+  <arguments>
+    <argument>
+      <name>hw_loop_name</name>
+      <display_name>Hot water plant loop</display_name>
+      <description>
+        Hot water PlantLoop (space heating or service water) to receive the
+        outdoor air reset, chosen from the plant loops in the model.
+      </description>
+      <type>Choice</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+    </argument>
+    <argument>
+      <name>sp_at_low_oa_f</name>
+      <display_name>Supply temperature at low outdoor temperature (F)</display_name>
+      <description>
+        Hot water supply setpoint when the outdoor dry-bulb is at or below the
+        low outdoor temperature, deg F.
+      </description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>180</default_value>
+    </argument>
+    <argument>
+      <name>low_oa_f</name>
+      <display_name>Low outdoor temperature (F)</display_name>
+      <description>Outdoor dry-bulb at and below which the low-OA supply setpoint applies, deg F.</description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>0</default_value>
+    </argument>
+    <argument>
+      <name>sp_at_high_oa_f</name>
+      <display_name>Supply temperature at high outdoor temperature (F)</display_name>
+      <description>
+        Hot water supply setpoint when the outdoor dry-bulb is at or above the
+        high outdoor temperature, deg F.
+      </description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>140</default_value>
+    </argument>
+    <argument>
+      <name>high_oa_f</name>
+      <display_name>High outdoor temperature (F)</display_name>
+      <description>
+        Outdoor dry-bulb at and above which the high-OA supply setpoint applies,
+        deg F. Must be greater than the low outdoor temperature.
+      </description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>60</default_value>
+    </argument>
+  </arguments>
+  <outputs/>
+  <provenances/>
+  <tags>
+    <tag>HVAC.HVAC Controls</tag>
+  </tags>
+  <attributes>
+    <attribute>
+      <name>Measure Type</name>
+      <value>ModelMeasure</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Measure Language</name>
+      <value>Ruby</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>Apply Measure Now</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>OpenStudio Application</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>Parametric Analysis Tool</value>
+      <datatype>string</datatype>
+    </attribute>
+  </attributes>
+  <files>
+    <file>
+      <filename>LICENSE.md</filename>
+      <filetype>md</filetype>
+      <usage_type>license</usage_type>
+      <checksum>4E306062</checksum>
+    </file>
+    <file>
+      <filename>README.md</filename>
+      <filetype>md</filetype>
+      <usage_type>readme</usage_type>
+      <checksum>A065071A</checksum>
+    </file>
+    <file>
+      <filename>README.md.erb</filename>
+      <filetype>erb</filetype>
+      <usage_type>readmeerb</usage_type>
+      <checksum>F1C26127</checksum>
+    </file>
+    <file>
+      <filename>.gitkeep</filename>
+      <filetype>gitkeep</filetype>
+      <usage_type>doc</usage_type>
+      <checksum>00000000</checksum>
+    </file>
+    <file>
+      <version>
+        <software_program>OpenStudio</software_program>
+        <identifier>3.11.0</identifier>
+        <min_compatible>3.11.0</min_compatible>
+      </version>
+      <filename>measure.rb</filename>
+      <filetype>rb</filetype>
+      <usage_type>script</usage_type>
+      <checksum>8E5B5CC7</checksum>
+    </file>
+    <file>
+      <filename>example_model.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>D6BD40D0</checksum>
+    </file>
+    <file>
+      <filename>hot_water_supply_outdoor_air_reset_test.rb</filename>
+      <filetype>rb</filetype>
+      <usage_type>test</usage_type>
+      <checksum>7411215C</checksum>
+    </file>
+    <file>
+      <filename>test_model.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>254E5AD7</checksum>
+    </file>
+  </files>
+</measure>

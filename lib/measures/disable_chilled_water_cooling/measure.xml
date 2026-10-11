@@ -1,0 +1,168 @@
+<?xml version='1.0'?>
+<measure>
+  <schema_version>3.1</schema_version>
+  <name>disable_chilled_water_cooling</name>
+  <uid>c248bb3b-3e15-4999-8f03-1ecd8b7e3540</uid>
+  <version_id>dfb78233-8e63-4ff4-8888-bd96daedc5be</version_id>
+  <version_modified>2026-10-11T17:58:46Z</version_modified>
+  <xml_checksum>7D6B52D0</xml_checksum>
+  <class_name>DisableChilledWaterCooling</class_name>
+  <display_name>Disable Chilled Water Cooling</display_name>
+  <description>
+    Turns off a chilled water cooling system for the annual simulation without
+    removing any components. An on/off availability schedule is applied to the
+    chilled water plant loop and to every chilled water cooling coil it serves.
+    The schedule is off all year but can be left on for the summer design day so
+    that equipment sizing still runs. Useful for buildings whose chilled water
+    system is not yet installed or is out of service, while keeping the model
+    ready for when cooling is added.
+  </description>
+  <modeler_description>
+    Finds the selected PlantLoop and reuses the ScheduleRuleset with the given
+    name or creates one: default day 0, winter design day 0, summer design day 1
+    (or 0 if cooling is off for the summer design day too), using an OnOff
+    Discrete/Availability ScheduleTypeLimits. If the loop already has an
+    AvailabilityManagerScheduledOff, it is pointed at the schedule. Otherwise a
+    new one is added at priority 1, ahead of any existing availability managers.
+    A schedule value of 0 forces the loop off. Every CoilCoolingWater whose
+    plantLoop is this loop gets the schedule as its availability schedule. This
+    includes cooling coils inside zone equipment such as fan coils. The parent
+    equipment's own availability schedule is not changed, because it also runs
+    the fan and the heating. Other demand components, such as cooled beams,
+    radiant cooling or fluid-to-fluid heat exchangers, are listed in a warning
+    but not changed. Nothing is removed, and sizing objects are not changed.
+  </modeler_description>
+  <arguments>
+    <argument>
+      <name>chw_loop_name</name>
+      <display_name>Chilled water plant loop</display_name>
+      <description>Chilled water PlantLoop to turn off, chosen from the plant loops in the model.</description>
+      <type>Choice</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+    </argument>
+    <argument>
+      <name>schedule_name</name>
+      <display_name>Off schedule name</display_name>
+      <description>
+        Name of the on/off ScheduleRuleset to apply. If a ruleset with this name
+        already exists it is reused as-is; otherwise it is created (off all
+        year, on for the summer design day if selected below).
+      </description>
+      <type>String</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>Chilled Water Off</default_value>
+    </argument>
+    <argument>
+      <name>on_for_summer_design_day</name>
+      <display_name>Keep cooling available on the summer design day</display_name>
+      <description>
+        When true, the new schedule is 1 on the summer design day so design-day
+        sizing simulations still exercise cooling. Ignored when an existing
+        schedule is reused.
+      </description>
+      <type>Boolean</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>true</default_value>
+      <choices>
+        <choice>
+          <value>true</value>
+          <display_name>true</display_name>
+        </choice>
+        <choice>
+          <value>false</value>
+          <display_name>false</display_name>
+        </choice>
+      </choices>
+    </argument>
+  </arguments>
+  <outputs/>
+  <provenances/>
+  <tags>
+    <tag>HVAC.HVAC Controls</tag>
+  </tags>
+  <attributes>
+    <attribute>
+      <name>Measure Type</name>
+      <value>ModelMeasure</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Measure Language</name>
+      <value>Ruby</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>Apply Measure Now</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>OpenStudio Application</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>Parametric Analysis Tool</value>
+      <datatype>string</datatype>
+    </attribute>
+  </attributes>
+  <files>
+    <file>
+      <filename>LICENSE.md</filename>
+      <filetype>md</filetype>
+      <usage_type>license</usage_type>
+      <checksum>4E306062</checksum>
+    </file>
+    <file>
+      <filename>README.md</filename>
+      <filetype>md</filetype>
+      <usage_type>readme</usage_type>
+      <checksum>08A97CCF</checksum>
+    </file>
+    <file>
+      <filename>README.md.erb</filename>
+      <filetype>erb</filetype>
+      <usage_type>readmeerb</usage_type>
+      <checksum>F1C26127</checksum>
+    </file>
+    <file>
+      <filename>.gitkeep</filename>
+      <filetype>gitkeep</filetype>
+      <usage_type>doc</usage_type>
+      <checksum>00000000</checksum>
+    </file>
+    <file>
+      <version>
+        <software_program>OpenStudio</software_program>
+        <identifier>3.11.0</identifier>
+        <min_compatible>3.11.0</min_compatible>
+      </version>
+      <filename>measure.rb</filename>
+      <filetype>rb</filetype>
+      <usage_type>script</usage_type>
+      <checksum>F861BC23</checksum>
+    </file>
+    <file>
+      <filename>disable_chilled_water_cooling_test.rb</filename>
+      <filetype>rb</filetype>
+      <usage_type>test</usage_type>
+      <checksum>9364A890</checksum>
+    </file>
+    <file>
+      <filename>example_model.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>D6BD40D0</checksum>
+    </file>
+    <file>
+      <filename>test_model.osm</filename>
+      <filetype>osm</filetype>
+      <usage_type>test</usage_type>
+      <checksum>254E5AD7</checksum>
+    </file>
+  </files>
+</measure>
