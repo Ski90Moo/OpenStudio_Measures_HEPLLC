@@ -3,9 +3,9 @@
   <schema_version>3.1</schema_version>
   <name>disable_chilled_water_cooling</name>
   <uid>c248bb3b-3e15-4999-8f03-1ecd8b7e3540</uid>
-  <version_id>dfb78233-8e63-4ff4-8888-bd96daedc5be</version_id>
-  <version_modified>2026-10-11T17:58:46Z</version_modified>
-  <xml_checksum>7D6B52D0</xml_checksum>
+  <version_id>5b68c12d-c8ce-4d22-aa72-fdfd0992755d</version_id>
+  <version_modified>2026-10-11T17:59:14Z</version_modified>
+  <xml_checksum>1FAEA9B4</xml_checksum>
   <class_name>DisableChilledWaterCooling</class_name>
   <display_name>Disable Chilled Water Cooling</display_name>
   <description>
@@ -130,12 +130,6 @@
       <checksum>F1C26127</checksum>
     </file>
     <file>
-      <filename>.gitkeep</filename>
-      <filetype>gitkeep</filetype>
-      <usage_type>doc</usage_type>
-      <checksum>00000000</checksum>
-    </file>
-    <file>
       <version>
         <software_program>OpenStudio</software_program>
         <identifier>3.11.0</identifier>
@@ -151,12 +145,6 @@
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
       <checksum>9364A890</checksum>
-    </file>
-    <file>
-      <filename>example_model.osm</filename>
-      <filetype>osm</filetype>
-      <usage_type>test</usage_type>
-      <checksum>D6BD40D0</checksum>
     </file>
     <file>
       <filename>test_model.osm</filename>

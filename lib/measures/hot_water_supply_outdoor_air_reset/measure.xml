@@ -3,9 +3,9 @@
   <schema_version>3.1</schema_version>
   <name>hot_water_supply_outdoor_air_reset</name>
   <uid>84537048-4647-4a4d-a17b-dd43a19b233e</uid>
-  <version_id>5d3e8d86-3849-4af0-9199-a50f5dae06a0</version_id>
-  <version_modified>2026-10-11T17:58:47Z</version_modified>
-  <xml_checksum>E673649D</xml_checksum>
+  <version_id>88b9be80-2bd0-43cb-b689-0a08acde777d</version_id>
+  <version_modified>2026-10-11T17:59:15Z</version_modified>
+  <xml_checksum>9632C9B8</xml_checksum>
   <class_name>HotWaterSupplyOutdoorAirReset</class_name>
   <display_name>Hot Water Supply Outdoor Air Reset</display_name>
   <description>
@@ -135,12 +135,6 @@
       <checksum>F1C26127</checksum>
     </file>
     <file>
-      <filename>.gitkeep</filename>
-      <filetype>gitkeep</filetype>
-      <usage_type>doc</usage_type>
-      <checksum>00000000</checksum>
-    </file>
-    <file>
       <version>
         <software_program>OpenStudio</software_program>
         <identifier>3.11.0</identifier>
@@ -150,12 +144,6 @@
       <filetype>rb</filetype>
       <usage_type>script</usage_type>
       <checksum>8E5B5CC7</checksum>
-    </file>
-    <file>
-      <filename>example_model.osm</filename>
-      <filetype>osm</filetype>
-      <usage_type>test</usage_type>
-      <checksum>D6BD40D0</checksum>
     </file>
     <file>
       <filename>hot_water_supply_outdoor_air_reset_test.rb</filename>
