@@ -1,0 +1,349 @@
+<?xml version='1.0'?>
+<measure>
+  <schema_version>3.1</schema_version>
+  <name>create_air_to_water_heat_pump</name>
+  <uid>9865486d-3c23-4d74-8357-2b0d383a4107</uid>
+  <version_id>cfcff35e-b13b-4188-8600-c975ac4d0282</version_id>
+  <version_modified>2026-10-13T20:07:46Z</version_modified>
+  <xml_checksum>21260BBC</xml_checksum>
+  <class_name>CreateAirToWaterHeatPump</class_name>
+  <display_name>Create Air To Water Heat Pump</display_name>
+  <description>
+    Creates an air-to-water heat pump for heating
+    (HeatPump:PlantLoop:EIR:Heating, air source) from a few catalog values:
+    capacity and COP at one rating point, water flow, and the low-ambient
+    lockout. Performance curves are generated from a Carnot model calibrated to
+    that rating point, so no manufacturer curve data is needed. Defaults
+    represent a ClimaCool UCA modular air-to-water heat pump bank. The heat pump
+    is created on its own, not connected to any plant loop: it is not simulated
+    until it is added to the supply side of a hot water loop, by hand in the
+    OpenStudio Application or by another measure. To add by hand, drag the
+    object onto a plant loop from the My Model tab.
+  </description>
+  <modeler_description>
+    Adds an unconnected HeatPumpPlantLoopEIRHeating (CondenserType AirSource,
+    ControlType Setpoint) with Timed or no defrost. CapFT is linear in leaving
+    load water temperature (LLT) and outdoor air temperature (OAT): 1 + a(OAT -
+    OAT_rated) + b(LLT - LLT_rated), with a and b entered in percent per deg F.
+    EIRFT is a biquadratic least-squares fit, over a 13 x 13 grid spanning the
+    curve limits, of EIR/EIR_rated = COP_c,rated / COP_c, where COP_c = Tc / (Tc
+    - Te), Tc = LLT + condenser approach and Te = OAT - evaporator approach (K).
+    Both curves take x = LLT and y = OAT in deg C and equal 1.0 at the rating
+    point, so the reference capacity and COP are reproduced there. The
+    second-law efficiency (COP_rated / COP_c,rated) is reported. Either curve
+    can be replaced by entering six biquadratic coefficients. The EIRfPLR curve
+    is the OpenStudio default. No plant loop, setpoint manager or operation
+    scheme is created or changed.
+  </modeler_description>
+  <arguments>
+    <argument>
+      <name>hp_name</name>
+      <display_name>Heat pump name</display_name>
+      <description>
+        Name of the new heat pump. Must not match an existing
+        HeatPump:PlantLoop:EIR:Heating.
+      </description>
+      <type>String</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>Air-to-Water Heat Pump</default_value>
+    </argument>
+    <argument>
+      <name>capacity_mbh</name>
+      <display_name>Rated heating capacity (MBH)</display_name>
+      <description>
+        Heating capacity at the rating point, kBtu/h. Default: 4 x ClimaCool
+        UCA030 at 19F OA / 113F leaving water.
+      </description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>937.6</default_value>
+    </argument>
+    <argument>
+      <name>cop</name>
+      <display_name>Rated COP</display_name>
+      <description>Heating COP at the rating point, compressor and fans included.</description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>2.191</default_value>
+    </argument>
+    <argument>
+      <name>rated_oat_f</name>
+      <display_name>Rating outdoor air temperature (F)</display_name>
+      <description>Outdoor dry-bulb at which capacity and COP are rated, deg F.</description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>19</default_value>
+    </argument>
+    <argument>
+      <name>rated_lwt_f</name>
+      <display_name>Rating leaving water temperature (F)</display_name>
+      <description>Leaving hot water temperature at which capacity and COP are rated, deg F.</description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>113</default_value>
+    </argument>
+    <argument>
+      <name>load_flow_gpm</name>
+      <display_name>Hot water flow (gpm)</display_name>
+      <description>Design water flow through the heat pump, gpm.</description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>150.3</default_value>
+    </argument>
+    <argument>
+      <name>cap_pct_per_f_oat</name>
+      <display_name>Capacity change per F outdoor air (%/F)</display_name>
+      <description>
+        Percent change in heating capacity per deg F rise in outdoor air
+        temperature. Positive: more capacity in milder weather.
+      </description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>1.17</default_value>
+    </argument>
+    <argument>
+      <name>cap_pct_per_f_lwt</name>
+      <display_name>Capacity change per F leaving water (%/F)</display_name>
+      <description>
+        Percent change in heating capacity per deg F rise in leaving water
+        temperature. Usually negative.
+      </description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>-0.3</default_value>
+    </argument>
+    <argument>
+      <name>cond_approach_f</name>
+      <display_name>Condenser approach (F)</display_name>
+      <description>
+        Refrigerant condensing temperature above the leaving water temperature,
+        deg F, used in the Carnot model.
+      </description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>5.4</default_value>
+    </argument>
+    <argument>
+      <name>evap_approach_f</name>
+      <display_name>Evaporator approach (F)</display_name>
+      <description>
+        Refrigerant evaporating temperature below the outdoor air temperature,
+        deg F, used in the Carnot model.
+      </description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>10.8</default_value>
+    </argument>
+    <argument>
+      <name>min_oat_f</name>
+      <display_name>Low-ambient lockout (F)</display_name>
+      <description>The heat pump does not run below this outdoor air temperature, deg F.</description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>0</default_value>
+    </argument>
+    <argument>
+      <name>defrost_control</name>
+      <display_name>Defrost control</display_name>
+      <description>
+        Timed: a fixed fraction of each hour is spent defrosting when the
+        outdoor air is below the defrost temperature. None: no defrost penalty.
+      </description>
+      <type>Choice</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>Timed</default_value>
+      <choices>
+        <choice>
+          <value>Timed</value>
+          <display_name>Timed</display_name>
+        </choice>
+        <choice>
+          <value>None</value>
+          <display_name>None</display_name>
+        </choice>
+      </choices>
+    </argument>
+    <argument>
+      <name>defrost_max_oat_f</name>
+      <display_name>Defrost below outdoor air temperature (F)</display_name>
+      <description>Defrost is active below this outdoor air temperature, deg F.</description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>40</default_value>
+    </argument>
+    <argument>
+      <name>defrost_fraction</name>
+      <display_name>Defrost time fraction</display_name>
+      <description>
+        Fraction of each hour spent in defrost, 0 to 1 (EnergyPlus default
+        0.058333, 3.5 minutes per hour).
+      </description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>0.058333</default_value>
+    </argument>
+    <argument>
+      <name>lwt_min_f</name>
+      <display_name>Curve minimum leaving water temperature (F)</display_name>
+      <description>
+        Lower limit of the curves' leaving water temperature input, and of the
+        fit range, deg F.
+      </description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>86</default_value>
+    </argument>
+    <argument>
+      <name>lwt_max_f</name>
+      <display_name>Curve maximum leaving water temperature (F)</display_name>
+      <description>
+        Upper limit of the curves' leaving water temperature input, and of the
+        fit range, deg F.
+      </description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>140</default_value>
+    </argument>
+    <argument>
+      <name>oat_min_f</name>
+      <display_name>Curve minimum outdoor air temperature (F)</display_name>
+      <description>
+        Lower limit of the curves' outdoor air temperature input, and of the fit
+        range, deg F.
+      </description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>-6</default_value>
+    </argument>
+    <argument>
+      <name>oat_max_f</name>
+      <display_name>Curve maximum outdoor air temperature (F)</display_name>
+      <description>
+        Upper limit of the curves' outdoor air temperature input, and of the fit
+        range, deg F.
+      </description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>66</default_value>
+    </argument>
+    <argument>
+      <name>capft_override</name>
+      <display_name>CapFT coefficients (optional)</display_name>
+      <description>
+        Leave blank to use the generated curve. Otherwise six comma-separated
+        biquadratic coefficients c1..c6 for f(LLT C, OAT C), normalized to 1.0
+        at the rating point.
+      </description>
+      <type>String</type>
+      <required>false</required>
+      <model_dependent>false</model_dependent>
+      <default_value/>
+    </argument>
+    <argument>
+      <name>eirft_override</name>
+      <display_name>EIRFT coefficients (optional)</display_name>
+      <description>
+        Leave blank to use the generated Carnot curve. Otherwise six
+        comma-separated biquadratic coefficients c1..c6 for f(LLT C, OAT C),
+        normalized to 1.0 at the rating point.
+      </description>
+      <type>String</type>
+      <required>false</required>
+      <model_dependent>false</model_dependent>
+      <default_value/>
+    </argument>
+  </arguments>
+  <outputs/>
+  <provenances/>
+  <tags>
+    <tag>HVAC.Heating</tag>
+  </tags>
+  <attributes>
+    <attribute>
+      <name>Measure Type</name>
+      <value>ModelMeasure</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Measure Language</name>
+      <value>Ruby</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>Apply Measure Now</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>OpenStudio Application</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>Parametric Analysis Tool</value>
+      <datatype>string</datatype>
+    </attribute>
+  </attributes>
+  <files>
+    <file>
+      <filename>LICENSE.md</filename>
+      <filetype>md</filetype>
+      <usage_type>license</usage_type>
+      <checksum>CD7F5672</checksum>
+    </file>
+    <file>
+      <filename>README.md</filename>
+      <filetype>md</filetype>
+      <usage_type>readme</usage_type>
+      <checksum>B97700F5</checksum>
+    </file>
+    <file>
+      <filename>README.md.erb</filename>
+      <filetype>erb</filetype>
+      <usage_type>readmeerb</usage_type>
+      <checksum>F1C26127</checksum>
+    </file>
+    <file>
+      <filename>.gitkeep</filename>
+      <filetype>gitkeep</filetype>
+      <usage_type>doc</usage_type>
+      <checksum>00000000</checksum>
+    </file>
+    <file>
+      <version>
+        <software_program>OpenStudio</software_program>
+        <identifier>3.11.0</identifier>
+        <min_compatible>3.11.0</min_compatible>
+      </version>
+      <filename>measure.rb</filename>
+      <filetype>rb</filetype>
+      <usage_type>script</usage_type>
+      <checksum>4C739590</checksum>
+    </file>
+    <file>
+      <filename>create_air_to_water_heat_pump_test.rb</filename>
+      <filetype>rb</filetype>
+      <usage_type>test</usage_type>
+      <checksum>D5707813</checksum>
+    </file>
+  </files>
+</measure>
