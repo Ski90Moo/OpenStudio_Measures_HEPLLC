@@ -4,11 +4,52 @@ class CreateAirToWaterHeatPump < OpenStudio::Measure::ModelMeasure
   end
 
   def description
-    return "Creates an air-to-water heat pump for heating (HeatPump:PlantLoop:EIR:Heating, air source) from a few catalog values: capacity and COP at one rating point, water flow, and the low-ambient lockout. Performance curves are generated from a Carnot model calibrated to that rating point, so no manufacturer curve data is needed. Defaults represent a ClimaCool UCA modular air-to-water heat pump bank. The heat pump is created on its own, not connected to any plant loop: it is not simulated until it is added to the supply side of a hot water loop, by hand in the OpenStudio Application or by another measure. To add by hand, drag the object onto a plant loop from the My Model tab."
+    return "Creates an air-to-water heat pump for heating (HeatPump:PlantLoop:EIR:Heating, air source) from a few catalog values: capacity and COP at one rating point, water flow, and the low-ambient lockout. Performance curves are generated from a Carnot model calibrated to that rating point, so no manufacturer curve data is needed. Defaults represent a ClimaCool UCA modular air-to-water heat pump bank, with operating limits from its catalog. The heat pump is created on its own, not connected to any plant loop: it is not simulated until it is added to the supply side of a hot water loop, by hand in the OpenStudio Application or by another measure. To add by hand, drag the object onto a plant loop from the My Model tab."
   end
 
   def modeler_description
-    return "Adds an unconnected HeatPumpPlantLoopEIRHeating (CondenserType AirSource, ControlType Setpoint) with Timed or no defrost. CapFT is linear in leaving load water temperature (LLT) and outdoor air temperature (OAT): 1 + a(OAT - OAT_rated) + b(LLT - LLT_rated), with a and b entered in percent per deg F. EIRFT is a biquadratic least-squares fit, over a 13 x 13 grid spanning the curve limits, of EIR/EIR_rated = COP_c,rated / COP_c, where COP_c = Tc / (Tc - Te), Tc = LLT + condenser approach and Te = OAT - evaporator approach (K). Both curves take x = LLT and y = OAT in deg C and equal 1.0 at the rating point, so the reference capacity and COP are reproduced there. The second-law efficiency (COP_rated / COP_c,rated) is reported. Either curve can be replaced by entering six biquadratic coefficients. The EIRfPLR curve is the OpenStudio default. No plant loop, setpoint manager or operation scheme is created or changed."
+    return "Adds an unconnected HeatPumpPlantLoopEIRHeating (CondenserType AirSource, ControlType Setpoint) with Timed or no defrost. CapFT is linear in leaving load water temperature (LLT) and outdoor air temperature (OAT): 1 + a(OAT - OAT_rated) + b(LLT - LLT_rated), with a and b entered in percent per deg F. EIRFT is a biquadratic least-squares fit, over a 13 x 13 grid spanning the curve limits, of EIR/EIR_rated = COP_c,rated / COP_c, where COP_c = Tc / (Tc - Te), Tc = LLT + condenser approach and Te = OAT - evaporator approach (K). Both curves take x = LLT and y = OAT in deg C and equal 1.0 at the rating point, so the reference capacity and COP are reproduced there. The second-law efficiency (COP_rated / COP_c,rated) is reported. Either curve can be replaced by entering six biquadratic coefficients. The EIRfPLR curve is the OpenStudio default. No plant loop, setpoint manager or operation scheme is created or changed. The maximum leaving water temperature is stored as the MaximumSupplyWaterTemperatureCurve, a Table:Lookup of outdoor air temperature (deg C): linear between the entered points, constant beyond them. EnergyPlus evaluates that curve at the outdoor dry-bulb but does not hold the outlet to it (tested in 25.2: with a 105F curve and a 113F setpoint the heat pump delivered 113F); Add Heat Pump Ahead Of Boiler reads it and limits the heat pump's setpoint to it, which is what enforces it. MinimumPartLoadRatio is set from the smallest capacity step; below it EnergyPlus cycles the heat pump. Timed defrost multiplies available capacity by 0.909 - 107.33 x (outdoor humidity ratio - coil saturation humidity ratio), about 0.85 to 0.9, below the defrost temperature; if the rated capacity already includes defrost, use None."
+  end
+
+  # Parses "x:y, x:y" (deg F) into [[x, y], ...] sorted by x, or nil.
+  def parse_points(text)
+    pts = text.to_s.split(',').map do |pair|
+      xy = pair.split(':').map { |v| Float(v.strip) rescue nil }
+      return nil unless xy.size == 2 && xy.none?(&:nil?)
+      xy
+    end
+    return nil if pts.empty? || pts.map(&:first).uniq.size != pts.size
+    pts.sort_by(&:first)
+  end
+
+  # Maximum Supply Water Temperature as a Table:Lookup in deg C: linear
+  # between the points, constant beyond the end points. One point gives a
+  # constant. EnergyPlus evaluates it at the outdoor dry-bulb.
+  def max_supply_table(model, name, pts_c)
+    pts_c = [pts_c[0], [pts_c[0][0] + 1.0, pts_c[0][1]]] if pts_c.size == 1
+    iv = OpenStudio::Model::TableIndependentVariable.new(model)
+    iv.setName("#{name} Outdoor Air Temperature")
+    iv.setInterpolationMethod('Linear')
+    iv.setExtrapolationMethod('Constant')
+    iv.setUnitType('Temperature')
+    iv.setMinimumValue(-60.0)
+    iv.setMaximumValue(80.0)
+    iv.setValues(pts_c.map(&:first))
+    t = OpenStudio::Model::TableLookup.new(model)
+    t.setName(name)
+    t.addIndependentVariable(iv)
+    t.setOutputValues(pts_c.map(&:last))
+    t.setMinimumOutput(pts_c.map(&:last).min)
+    t.setMaximumOutput(pts_c.map(&:last).max)
+    t
+  end
+
+  # Linear between points, constant beyond them.
+  def interp(pts, x)
+    return pts.first[1] if x <= pts.first[0]
+    return pts.last[1] if x >= pts.last[0]
+    a, b = pts.each_cons(2).find { |_, q| x <= q[0] }
+    a[1] + (b[1] - a[1]) * (x - a[0]) / (b[0] - a[0])
   end
 
   def arguments(model)
@@ -65,9 +106,19 @@ class CreateAirToWaterHeatPump < OpenStudio::Measure::ModelMeasure
     args << evap_approach_f
     min_oat_f = OpenStudio::Measure::OSArgument.makeDoubleArgument("min_oat_f", true)
     min_oat_f.setDisplayName("Low-ambient lockout (F)")
-    min_oat_f.setDescription("The heat pump does not run below this outdoor air temperature, deg F.")
-    min_oat_f.setDefaultValue(0.0)
+    min_oat_f.setDescription("The heat pump does not run below this outdoor air temperature, deg F. Default: ClimaCool UCA minimum entering source air in heating, 17F.")
+    min_oat_f.setDefaultValue(17.0)
     args << min_oat_f
+    max_supply_points = OpenStudio::Measure::OSArgument.makeStringArgument("max_supply_points", true)
+    max_supply_points.setDisplayName("Maximum leaving water temperature vs outdoor air (F)")
+    max_supply_points.setDescription("Highest water temperature the heat pump can deliver, as comma-separated outdoor air:leaving water pairs in deg F, from the manufacturer's data. Linear between points, constant beyond the end points; one pair gives a constant. Stored as the heat pump's Maximum Supply Water Temperature Curve (a Table:Lookup); Add Heat Pump Ahead Of Boiler uses it to limit the heat pump's setpoint. Default: ClimaCool UCA, 113F at 19F (selection at full load) and 135F at 40F and above (catalog maximum), extended to 110.9F at the 17F minimum.")
+    max_supply_points.setDefaultValue("17:110.9, 19:113, 40:135")
+    args << max_supply_points
+    min_plr = OpenStudio::Measure::OSArgument.makeDoubleArgument("min_plr", true)
+    min_plr.setDisplayName("Minimum part load ratio")
+    min_plr.setDescription("Smallest capacity step as a fraction of full capacity; below it the heat pump cycles. Default: 4 x UCA030 with 2 compressors each, 1/8 = 0.125.")
+    min_plr.setDefaultValue(0.125)
+    args << min_plr
     defrost_control_choices = OpenStudio::StringVector.new
     defrost_control_choices << "Timed"
     defrost_control_choices << "None"
@@ -88,23 +139,23 @@ class CreateAirToWaterHeatPump < OpenStudio::Measure::ModelMeasure
     args << defrost_fraction
     lwt_min_f = OpenStudio::Measure::OSArgument.makeDoubleArgument("lwt_min_f", true)
     lwt_min_f.setDisplayName("Curve minimum leaving water temperature (F)")
-    lwt_min_f.setDescription("Lower limit of the curves' leaving water temperature input, and of the fit range, deg F.")
-    lwt_min_f.setDefaultValue(86.0)
+    lwt_min_f.setDescription("Lower limit of the curves' leaving water temperature input, and of the fit range, deg F. Default: ClimaCool UCA minimum leaving hot water, 90F.")
+    lwt_min_f.setDefaultValue(90.0)
     args << lwt_min_f
     lwt_max_f = OpenStudio::Measure::OSArgument.makeDoubleArgument("lwt_max_f", true)
     lwt_max_f.setDisplayName("Curve maximum leaving water temperature (F)")
-    lwt_max_f.setDescription("Upper limit of the curves' leaving water temperature input, and of the fit range, deg F.")
-    lwt_max_f.setDefaultValue(140.0)
+    lwt_max_f.setDescription("Upper limit of the curves' leaving water temperature input, and of the fit range, deg F. Default: ClimaCool UCA maximum leaving hot water, 135F.")
+    lwt_max_f.setDefaultValue(135.0)
     args << lwt_max_f
     oat_min_f = OpenStudio::Measure::OSArgument.makeDoubleArgument("oat_min_f", true)
     oat_min_f.setDisplayName("Curve minimum outdoor air temperature (F)")
-    oat_min_f.setDescription("Lower limit of the curves' outdoor air temperature input, and of the fit range, deg F.")
-    oat_min_f.setDefaultValue(-6.0)
+    oat_min_f.setDescription("Lower limit of the curves' outdoor air temperature input, and of the fit range, deg F. Default: ClimaCool UCA minimum entering source air in heating, 17F.")
+    oat_min_f.setDefaultValue(17.0)
     args << oat_min_f
     oat_max_f = OpenStudio::Measure::OSArgument.makeDoubleArgument("oat_max_f", true)
     oat_max_f.setDisplayName("Curve maximum outdoor air temperature (F)")
-    oat_max_f.setDescription("Upper limit of the curves' outdoor air temperature input, and of the fit range, deg F.")
-    oat_max_f.setDefaultValue(66.0)
+    oat_max_f.setDescription("Upper limit of the curves' outdoor air temperature input, and of the fit range, deg F. Default: ClimaCool UCA maximum entering source air in heating, 100F.")
+    oat_max_f.setDefaultValue(100.0)
     args << oat_max_f
     capft_override = OpenStudio::Measure::OSArgument.makeStringArgument("capft_override", false)
     capft_override.setDisplayName("CapFT coefficients (optional)")
@@ -135,6 +186,8 @@ class CreateAirToWaterHeatPump < OpenStudio::Measure::ModelMeasure
     cond_approach_f = runner.getDoubleArgumentValue("cond_approach_f", user_arguments)
     evap_approach_f = runner.getDoubleArgumentValue("evap_approach_f", user_arguments)
     min_oat_f = runner.getDoubleArgumentValue("min_oat_f", user_arguments)
+    max_supply_points = runner.getStringArgumentValue("max_supply_points", user_arguments)
+    min_plr = runner.getDoubleArgumentValue("min_plr", user_arguments)
     defrost_control = runner.getStringArgumentValue("defrost_control", user_arguments)
     defrost_max_oat_f = runner.getDoubleArgumentValue("defrost_max_oat_f", user_arguments)
     defrost_fraction = runner.getDoubleArgumentValue("defrost_fraction", user_arguments)
@@ -160,6 +213,22 @@ class CreateAirToWaterHeatPump < OpenStudio::Measure::ModelMeasure
     end
     unless rated_lwt_f.between?(lwt_min_f, lwt_max_f) && rated_oat_f.between?(oat_min_f, oat_max_f)
       runner.registerError("The rating point (#{rated_oat_f}F OA, #{rated_lwt_f}F water) must lie inside the curve limits.")
+      return false
+    end
+    max_pts = parse_points(max_supply_points)
+    if max_pts.nil?
+      runner.registerError("Maximum leaving water temperature must be comma-separated outdoor air:leaving water pairs in deg F with distinct outdoor temperatures, for example 17:110.9, 19:113, 40:135.")
+      return false
+    end
+    if interp(max_pts, rated_oat_f) < rated_lwt_f - 0.05
+      runner.registerError("The maximum leaving water temperature at the rating outdoor air temperature (#{interp(max_pts, rated_oat_f).round(1)}F at #{rated_oat_f}F) is below the rated leaving water temperature (#{rated_lwt_f}F).")
+      return false
+    end
+    if max_pts.map(&:last).max > lwt_max_f
+      runner.registerWarning("The maximum leaving water temperature (up to #{max_pts.map(&:last).max}F) is above the curves' maximum (#{lwt_max_f}F); above #{lwt_max_f}F EnergyPlus holds capacity and COP at their #{lwt_max_f}F values.")
+    end
+    unless min_plr.between?(0.0, 1.0)
+      runner.registerError('Minimum part load ratio must be between 0 and 1.')
       return false
     end
     runner.registerInitialCondition("The model has #{model.getHeatPumpPlantLoopEIRHeatings.size} plant loop heating heat pumps.")
@@ -276,10 +345,12 @@ class CreateAirToWaterHeatPump < OpenStudio::Measure::ModelMeasure
     hp.setCapacityModifierFunctionofTemperatureCurve(mk_curve.call("#{hp_name} CapFT", cap_co))
     hp.setElectricInputtoOutputRatioModifierFunctionofTemperatureCurve(mk_curve.call("#{hp_name} EIRFT", eir_co))
     [old_cap, old_eir].each { |c| c.remove if c.directUseCount == 0 }
+    hp.setMaximumSupplyWaterTemperatureCurve(max_supply_table(model, "#{hp_name} Maximum Supply Water Temperature", max_pts.map { |x, y| [f2c.call(x), f2c.call(y)] }))
+    hp.setMinimumPartLoadRatio(min_plr)
     runner.registerInfo("CapFT (#{cap_src}): #{cap_co.map { |c| format('%.8e', c) }.join(',')}")
     runner.registerInfo("EIRFT (#{eir_src}): #{eir_co.map { |c| format('%.8e', c) }.join(',')}")
 
-    runner.registerFinalCondition("Created '#{hp_name}': #{capacity_mbh} MBH, COP #{cop} at #{rated_oat_f}F OA / #{rated_lwt_f}F water, lockout below #{min_oat_f}F OA. It is not connected to a plant loop and will not be simulated until it is added to a hot water loop's supply side.")
+    runner.registerFinalCondition("Created '#{hp_name}': #{capacity_mbh} MBH, COP #{cop} at #{rated_oat_f}F OA / #{rated_lwt_f}F water, lockout below #{min_oat_f}F OA, maximum leaving water #{max_pts.map { |x, y| "#{y}F at #{x}F" }.join(", ")} OA, minimum part load ratio #{min_plr}. It is not connected to a plant loop and will not be simulated until it is added to a hot water loop's supply side.")
     true
     # --- end user logic ---
     return true

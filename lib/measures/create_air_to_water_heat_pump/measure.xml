@@ -1,27 +1,28 @@
-<?xml version='1.0'?> 
+<?xml version='1.0'?>
 <measure>
   <schema_version>3.1</schema_version>
   <name>create_air_to_water_heat_pump</name>
   <uid>9865486d-3c23-4d74-8357-2b0d383a4107</uid>
-  <version_id>cfcff35e-b13b-4188-8600-c975ac4d0282</version_id>
-  <version_modified>2026-10-13T20:08:09Z</version_modified>
-  <xml_checksum>09C58DDB</xml_checksum>
+  <version_id>3b352d13-7477-4006-81a6-35b88cdc6226</version_id>
+  <version_modified>2026-10-16T16:03:46Z</version_modified>
+  <xml_checksum>C035DDF4</xml_checksum>
   <class_name>CreateAirToWaterHeatPump</class_name>
   <display_name>Create Air To Water Heat Pump</display_name>
   <description>
-     Creates an air-to-water heat pump for heating
+    Creates an air-to-water heat pump for heating
     (HeatPump:PlantLoop:EIR:Heating, air source) from a few catalog values:
     capacity and COP at one rating point, water flow, and the low-ambient
     lockout. Performance curves are generated from a Carnot model calibrated to
     that rating point, so no manufacturer curve data is needed. Defaults
-    represent a ClimaCool UCA modular air-to-water heat pump bank. The heat pump
-    is created on its own, not connected to any plant loop: it is not simulated
-    until it is added to the supply side of a hot water loop, by hand in the
-    OpenStudio Application or by another measure. To add by hand, drag the
-    object onto a plant loop from the My Model tab. 
+    represent a ClimaCool UCA modular air-to-water heat pump bank, with
+    operating limits from its catalog. The heat pump is created on its own, not
+    connected to any plant loop: it is not simulated until it is added to the
+    supply side of a hot water loop, by hand in the OpenStudio Application or by
+    another measure. To add by hand, drag the object onto a plant loop from the
+    My Model tab.
   </description>
   <modeler_description>
-     Adds an unconnected HeatPumpPlantLoopEIRHeating (CondenserType AirSource,
+    Adds an unconnected HeatPumpPlantLoopEIRHeating (CondenserType AirSource,
     ControlType Setpoint) with Timed or no defrost. CapFT is linear in leaving
     load water temperature (LLT) and outdoor air temperature (OAT): 1 + a(OAT -
     OAT_rated) + b(LLT - LLT_rated), with a and b entered in percent per deg F.
@@ -33,15 +34,26 @@
     second-law efficiency (COP_rated / COP_c,rated) is reported. Either curve
     can be replaced by entering six biquadratic coefficients. The EIRfPLR curve
     is the OpenStudio default. No plant loop, setpoint manager or operation
-    scheme is created or changed. 
+    scheme is created or changed. The maximum leaving water temperature is
+    stored as the MaximumSupplyWaterTemperatureCurve, a Table:Lookup of outdoor
+    air temperature (deg C): linear between the entered points, constant beyond
+    them. EnergyPlus evaluates that curve at the outdoor dry-bulb but does not
+    hold the outlet to it (tested in 25.2: with a 105F curve and a 113F setpoint
+    the heat pump delivered 113F); Add Heat Pump Ahead Of Boiler reads it and
+    limits the heat pump's setpoint to it, which is what enforces it.
+    MinimumPartLoadRatio is set from the smallest capacity step; below it
+    EnergyPlus cycles the heat pump. Timed defrost multiplies available capacity
+    by 0.909 - 107.33 x (outdoor humidity ratio - coil saturation humidity
+    ratio), about 0.85 to 0.9, below the defrost temperature; if the rated
+    capacity already includes defrost, use None.
   </modeler_description>
   <arguments>
     <argument>
       <name>hp_name</name>
       <display_name>Heat pump name</display_name>
       <description>
-         Name of the new heat pump. Must not match an existing
-        HeatPump:PlantLoop:EIR:Heating. 
+        Name of the new heat pump. Must not match an existing
+        HeatPump:PlantLoop:EIR:Heating.
       </description>
       <type>String</type>
       <required>true</required>
@@ -52,8 +64,8 @@
       <name>capacity_mbh</name>
       <display_name>Rated heating capacity (MBH)</display_name>
       <description>
-         Heating capacity at the rating point, kBtu/h. Default: 4 x ClimaCool
-        UCA030 at 19F OA / 113F leaving water. 
+        Heating capacity at the rating point, kBtu/h. Default: 4 x ClimaCool
+        UCA030 at 19F OA / 113F leaving water.
       </description>
       <type>Double</type>
       <required>true</required>
@@ -100,8 +112,8 @@
       <name>cap_pct_per_f_oat</name>
       <display_name>Capacity change per F outdoor air (%/F)</display_name>
       <description>
-         Percent change in heating capacity per deg F rise in outdoor air
-        temperature. Positive: more capacity in milder weather. 
+        Percent change in heating capacity per deg F rise in outdoor air
+        temperature. Positive: more capacity in milder weather.
       </description>
       <type>Double</type>
       <required>true</required>
@@ -112,8 +124,8 @@
       <name>cap_pct_per_f_lwt</name>
       <display_name>Capacity change per F leaving water (%/F)</display_name>
       <description>
-         Percent change in heating capacity per deg F rise in leaving water
-        temperature. Usually negative. 
+        Percent change in heating capacity per deg F rise in leaving water
+        temperature. Usually negative.
       </description>
       <type>Double</type>
       <required>true</required>
@@ -124,8 +136,8 @@
       <name>cond_approach_f</name>
       <display_name>Condenser approach (F)</display_name>
       <description>
-         Refrigerant condensing temperature above the leaving water temperature,
-        deg F, used in the Carnot model. 
+        Refrigerant condensing temperature above the leaving water temperature,
+        deg F, used in the Carnot model.
       </description>
       <type>Double</type>
       <required>true</required>
@@ -136,8 +148,8 @@
       <name>evap_approach_f</name>
       <display_name>Evaporator approach (F)</display_name>
       <description>
-         Refrigerant evaporating temperature below the outdoor air temperature,
-        deg F, used in the Carnot model. 
+        Refrigerant evaporating temperature below the outdoor air temperature,
+        deg F, used in the Carnot model.
       </description>
       <type>Double</type>
       <required>true</required>
@@ -147,18 +159,51 @@
     <argument>
       <name>min_oat_f</name>
       <display_name>Low-ambient lockout (F)</display_name>
-      <description>The heat pump does not run below this outdoor air temperature, deg F.</description>
+      <description>
+        The heat pump does not run below this outdoor air temperature, deg F.
+        Default: ClimaCool UCA minimum entering source air in heating, 17F.
+      </description>
       <type>Double</type>
       <required>true</required>
       <model_dependent>false</model_dependent>
-      <default_value>0</default_value>
+      <default_value>17</default_value>
+    </argument>
+    <argument>
+      <name>max_supply_points</name>
+      <display_name>Maximum leaving water temperature vs outdoor air (F)</display_name>
+      <description>
+        Highest water temperature the heat pump can deliver, as comma-separated
+        outdoor air:leaving water pairs in deg F, from the manufacturer's data.
+        Linear between points, constant beyond the end points; one pair gives a
+        constant. Stored as the heat pump's Maximum Supply Water Temperature
+        Curve (a Table:Lookup); Add Heat Pump Ahead Of Boiler uses it to limit
+        the heat pump's setpoint. Default: ClimaCool UCA, 113F at 19F (selection
+        at full load) and 135F at 40F and above (catalog maximum), extended to
+        110.9F at the 17F minimum.
+      </description>
+      <type>String</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>17:110.9, 19:113, 40:135</default_value>
+    </argument>
+    <argument>
+      <name>min_plr</name>
+      <display_name>Minimum part load ratio</display_name>
+      <description>
+        Smallest capacity step as a fraction of full capacity; below it the heat
+        pump cycles. Default: 4 x UCA030 with 2 compressors each, 1/8 = 0.125.
+      </description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>0.125</default_value>
     </argument>
     <argument>
       <name>defrost_control</name>
       <display_name>Defrost control</display_name>
       <description>
-         Timed: a fixed fraction of each hour is spent defrosting when the
-        outdoor air is below the defrost temperature. None: no defrost penalty. 
+        Timed: a fixed fraction of each hour is spent defrosting when the
+        outdoor air is below the defrost temperature. None: no defrost penalty.
       </description>
       <type>Choice</type>
       <required>true</required>
@@ -188,8 +233,8 @@
       <name>defrost_fraction</name>
       <display_name>Defrost time fraction</display_name>
       <description>
-         Fraction of each hour spent in defrost, 0 to 1 (EnergyPlus default
-        0.058333, 3.5 minutes per hour). 
+        Fraction of each hour spent in defrost, 0 to 1 (EnergyPlus default
+        0.058333, 3.5 minutes per hour).
       </description>
       <type>Double</type>
       <required>true</required>
@@ -200,57 +245,60 @@
       <name>lwt_min_f</name>
       <display_name>Curve minimum leaving water temperature (F)</display_name>
       <description>
-         Lower limit of the curves' leaving water temperature input, and of the
-        fit range, deg F. 
+        Lower limit of the curves' leaving water temperature input, and of the
+        fit range, deg F. Default: ClimaCool UCA minimum leaving hot water, 90F.
       </description>
       <type>Double</type>
       <required>true</required>
       <model_dependent>false</model_dependent>
-      <default_value>86</default_value>
+      <default_value>90</default_value>
     </argument>
     <argument>
       <name>lwt_max_f</name>
       <display_name>Curve maximum leaving water temperature (F)</display_name>
       <description>
-         Upper limit of the curves' leaving water temperature input, and of the
-        fit range, deg F. 
+        Upper limit of the curves' leaving water temperature input, and of the
+        fit range, deg F. Default: ClimaCool UCA maximum leaving hot water,
+        135F.
       </description>
       <type>Double</type>
       <required>true</required>
       <model_dependent>false</model_dependent>
-      <default_value>140</default_value>
+      <default_value>135</default_value>
     </argument>
     <argument>
       <name>oat_min_f</name>
       <display_name>Curve minimum outdoor air temperature (F)</display_name>
       <description>
-         Lower limit of the curves' outdoor air temperature input, and of the
-        fit range, deg F. 
+        Lower limit of the curves' outdoor air temperature input, and of the fit
+        range, deg F. Default: ClimaCool UCA minimum entering source air in
+        heating, 17F.
       </description>
       <type>Double</type>
       <required>true</required>
       <model_dependent>false</model_dependent>
-      <default_value>-6</default_value>
+      <default_value>17</default_value>
     </argument>
     <argument>
       <name>oat_max_f</name>
       <display_name>Curve maximum outdoor air temperature (F)</display_name>
       <description>
-         Upper limit of the curves' outdoor air temperature input, and of the
-        fit range, deg F. 
+        Upper limit of the curves' outdoor air temperature input, and of the fit
+        range, deg F. Default: ClimaCool UCA maximum entering source air in
+        heating, 100F.
       </description>
       <type>Double</type>
       <required>true</required>
       <model_dependent>false</model_dependent>
-      <default_value>66</default_value>
+      <default_value>100</default_value>
     </argument>
     <argument>
       <name>capft_override</name>
       <display_name>CapFT coefficients (optional)</display_name>
       <description>
-         Leave blank to use the generated curve. Otherwise six comma-separated
+        Leave blank to use the generated curve. Otherwise six comma-separated
         biquadratic coefficients c1..c6 for f(LLT C, OAT C), normalized to 1.0
-        at the rating point. 
+        at the rating point.
       </description>
       <type>String</type>
       <required>false</required>
@@ -261,9 +309,9 @@
       <name>eirft_override</name>
       <display_name>EIRFT coefficients (optional)</display_name>
       <description>
-         Leave blank to use the generated Carnot curve. Otherwise six
+        Leave blank to use the generated Carnot curve. Otherwise six
         comma-separated biquadratic coefficients c1..c6 for f(LLT C, OAT C),
-        normalized to 1.0 at the rating point. 
+        normalized to 1.0 at the rating point.
       </description>
       <type>String</type>
       <required>false</required>
@@ -314,7 +362,7 @@
       <filename>README.md</filename>
       <filetype>md</filetype>
       <usage_type>readme</usage_type>
-      <checksum>B97700F5</checksum>
+      <checksum>C92DEF08</checksum>
     </file>
     <file>
       <filename>README.md.erb</filename>
@@ -331,13 +379,13 @@
       <filename>measure.rb</filename>
       <filetype>rb</filetype>
       <usage_type>script</usage_type>
-      <checksum>4C739590</checksum>
+      <checksum>B69ECB91</checksum>
     </file>
     <file>
       <filename>create_air_to_water_heat_pump_test.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
-      <checksum>D5707813</checksum>
+      <checksum>0601325E</checksum>
     </file>
   </files>
 </measure>

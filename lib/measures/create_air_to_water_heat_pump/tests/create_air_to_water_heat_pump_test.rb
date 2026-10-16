@@ -32,7 +32,7 @@ class CreateAirToWaterHeatPumpTest < Minitest::Test
   end
 
   def test_number_of_arguments
-    assert_equal(20, CreateAirToWaterHeatPump.new.arguments(OpenStudio::Model::Model.new).size)
+    assert_equal(22, CreateAirToWaterHeatPump.new.arguments(OpenStudio::Model::Model.new).size)
   end
 
   def test_defaults_create_unconnected_heat_pump
@@ -56,7 +56,7 @@ class CreateAirToWaterHeatPumpTest < Minitest::Test
     # Linear CapFT: +1.17 %/F OA, -0.3 %/F leaving water.
     [1.39510000e+00, -5.40000000e-03, 0.0, 2.10600000e-02, 0.0, 0.0].zip(cap).each { |e, a| assert_in_delta(e, a, 1e-9) }
     # Carnot EIRFT fit, independently computed with numpy lstsq.
-    [1.84138301e-01, 1.74066372e-02, -4.22193861e-05, -1.86384016e-02, 0.0, 5.09335298e-05].zip(eir).each { |e, a| assert_in_delta(e, a, 1e-9) }
+    [1.79353980e-01, 1.76307038e-02, -4.48133166e-05, -1.86346494e-02, 0.0, 5.09915838e-05].zip(eir).each { |e, a| assert_in_delta(e, a, 1e-9) }
 
     # Unused default curves are removed: only the two named curves remain.
     assert_equal(2, model.getCurveBiquadratics.size)
@@ -85,7 +85,40 @@ class CreateAirToWaterHeatPumpTest < Minitest::Test
   end
 
   def test_rating_point_outside_limits_fails
-    result = run_measure(OpenStudio::Model::Model.new, 'rated_oat_f' => 80.0)
+    result = run_measure(OpenStudio::Model::Model.new, 'rated_oat_f' => 110.0)
     assert_equal('Fail', result.value.valueName)
+  end
+  def test_maximum_supply_water_temperature
+    model = OpenStudio::Model::Model.new
+    assert_equal('Success', run_measure(model).value.valueName)
+    hp = model.getHeatPumpPlantLoopEIRHeatingByName('Air-to-Water Heat Pump').get
+    assert_in_delta(17.0, hp.minimumSourceInletTemperature * 1.8 + 32.0, 1e-9)
+    assert_in_delta(0.125, hp.minimumPartLoadRatio, 1e-12)
+    table = hp.maximumSupplyWaterTemperatureCurve.get.to_TableLookup.get
+    assert_equal('Air-to-Water Heat Pump Maximum Supply Water Temperature', table.name.to_s)
+    iv = table.independentVariables[0]
+    assert_equal('Linear', iv.interpolationMethod)
+    assert_equal('Constant', iv.extrapolationMethod)
+    [17.0, 19.0, 40.0].zip(iv.values.to_a).each { |e, a| assert_in_delta(F2C.call(e), a, 1e-9) }
+    [110.9, 113.0, 135.0].zip(table.outputValues.to_a).each { |e, a| assert_in_delta(F2C.call(e), a, 1e-9) }
+
+    # One pair gives a constant.
+    model = OpenStudio::Model::Model.new
+    assert_equal('Success', run_measure(model, 'max_supply_points' => '0:120').value.valueName)
+    table = model.getHeatPumpPlantLoopEIRHeatings.first.maximumSupplyWaterTemperatureCurve.get.to_TableLookup.get
+    table.outputValues.to_a.each { |v| assert_in_delta(F2C.call(120.0), v, 1e-9) }
+    assert_equal(2, table.outputValues.size)
+
+    # Above the curves' leaving water limit: warned.
+    result = run_measure(OpenStudio::Model::Model.new, 'max_supply_points' => '17:113, 40:150')
+    assert_equal('Success', result.value.valueName)
+    assert(result.warnings.any? { |w| w.logMessage.include?("above the curves' maximum") })
+
+    # Below the rated leaving water temperature at the rating outdoor air: fails.
+    assert_equal('Fail', run_measure(OpenStudio::Model::Model.new, 'max_supply_points' => '17:105, 40:135').value.valueName)
+    # Unreadable or duplicate points: fail.
+    assert_equal('Fail', run_measure(OpenStudio::Model::Model.new, 'max_supply_points' => '17-113').value.valueName)
+    assert_equal('Fail', run_measure(OpenStudio::Model::Model.new, 'max_supply_points' => '19:113, 19:120').value.valueName)
+    assert_equal('Fail', run_measure(OpenStudio::Model::Model.new, 'min_plr' => 1.5).value.valueName)
   end
 end

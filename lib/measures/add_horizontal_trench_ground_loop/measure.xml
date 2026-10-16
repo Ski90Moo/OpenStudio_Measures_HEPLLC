@@ -1,0 +1,318 @@
+<?xml version='1.0'?>
+<measure>
+  <schema_version>3.1</schema_version>
+  <name>add_horizontal_trench_ground_loop</name>
+  <uid>8a31ff2b-e948-4880-b37c-f75f10bf9960</uid>
+  <version_id>46138a9d-71b0-42bb-a2ed-1ee344afac76</version_id>
+  <version_modified>2026-10-16T16:03:45Z</version_modified>
+  <xml_checksum>229B7FBF</xml_checksum>
+  <class_name>AddHorizontalTrenchGroundLoop</class_name>
+  <display_name>Add Horizontal Trench Ground Loop</display_name>
+  <description>
+    Creates a ground loop for a water-source heat pump: a condenser loop with a
+    constant-speed pump and a horizontal trench ground heat exchanger in soil
+    described by its thermal properties and a Kusuda-Achenbach undisturbed
+    ground temperature model, filled with water or propylene glycol. The
+    selected heat pump's source side is connected to the loop. Supports plant
+    loop EIR and water-to-water equation fit heat pumps, heating or cooling,
+    whose source side is not yet on a loop. Use it after a measure that creates
+    the heat pump, such as Create Water-to-Water Heat Pump.
+  </description>
+  <modeler_description>
+    Creates a PlantLoop (condenser sizing) with PumpConstantSpeed (Intermittent,
+    end use subcategory 'Ground Loop Pumps') at the supply inlet, a
+    GroundHeatExchangerHorizontalTrench on a supply branch, and a
+    SetpointManagerScheduled at the supply outlet. The trench is not controlled,
+    so the setpoint is passive; it is also the sizing exit temperature (3 C
+    design temperature difference). The GHX and pump use one design flow:
+    entered, or the heat pump's hard-sized source side flow. The GHX soil
+    properties also feed a new SiteGroundTemperatureUndisturbedKusudaAchenbach,
+    which replaces the GHX's default ground model. Pipe properties are HDPE
+    (0.39 W/m-K, 950 kg/m3, 1900 J/kg-K). The heat pump is added to the loop's
+    demand side with addDemandBranchForComponent.
+    HeatPumpPlantLoopEIRHeating/Cooling show CondenserType AirSource until
+    connected to a source loop. 'First water-source heat pump' takes EIR heat
+    pumps tagged with AdditionalProperties IntendedCondenserType = WaterSource
+    (as Create Water-to-Water Heat Pump does) and equation fit heat pumps.
+    Untagged EIR heat pumps can be picked by name and are converted to water
+    source.
+  </modeler_description>
+  <arguments>
+    <argument>
+      <name>hp_name</name>
+      <display_name>Heat pump</display_name>
+      <description>
+        Heat pump whose source side is connected to the new ground loop. 'First
+        water-source heat pump without a source loop' takes the first one found
+        when the measure runs, for use after a measure in the same workflow that
+        creates the heat pump.
+      </description>
+      <type>Choice</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>First water-source heat pump without a source loop</default_value>
+      <choices>
+        <choice>
+          <value>First water-source heat pump without a source loop</value>
+          <display_name>First water-source heat pump without a source loop</display_name>
+        </choice>
+      </choices>
+    </argument>
+    <argument>
+      <name>loop_name</name>
+      <display_name>Ground loop name</display_name>
+      <description>Name of the new condenser loop. Must not match an existing plant loop.</description>
+      <type>String</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>Ground Loop</default_value>
+    </argument>
+    <argument>
+      <name>design_flow_gpm</name>
+      <display_name>Ground loop design flow (gpm)</display_name>
+      <description>
+        Design flow of the ground heat exchanger and pump, gpm. 0 uses the heat
+        pump's source side flow, which must then be hard-sized.
+      </description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>0</default_value>
+    </argument>
+    <argument>
+      <name>glycol_pct</name>
+      <display_name>Propylene glycol (%)</display_name>
+      <description>Propylene glycol concentration in the ground loop, percent. 0 = plain water.</description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>25</default_value>
+    </argument>
+    <argument>
+      <name>loop_setpoint_f</name>
+      <display_name>Loop setpoint and sizing exit temperature (F)</display_name>
+      <description>
+        The ground heat exchanger is not controlled, so this setpoint is
+        passive; it is also the loop's design exit temperature for sizing, deg
+        F.
+      </description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>45</default_value>
+    </argument>
+    <argument>
+      <name>pump_hp</name>
+      <display_name>Pump power (hp)</display_name>
+      <description>
+        Ground loop pump electric input at design flow, hp. The pump runs at
+        constant speed whenever the heat pump runs.
+      </description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>17.5</default_value>
+    </argument>
+    <argument>
+      <name>n_trenches</name>
+      <display_name>Number of trenches</display_name>
+      <description>Number of parallel horizontal trenches, one pipe each.</description>
+      <type>Integer</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>32</default_value>
+    </argument>
+    <argument>
+      <name>trench_length_ft</name>
+      <display_name>Trench length (ft)</display_name>
+      <description>Pipe length per trench, ft.</description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>1500</default_value>
+    </argument>
+    <argument>
+      <name>trench_spacing_ft</name>
+      <display_name>Spacing between pipes (ft)</display_name>
+      <description>Center-to-center horizontal spacing between trench pipes, ft.</description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>3.28</default_value>
+    </argument>
+    <argument>
+      <name>burial_depth_ft</name>
+      <display_name>Burial depth (ft)</display_name>
+      <description>Depth of the pipes below grade, ft.</description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>4.92</default_value>
+    </argument>
+    <argument>
+      <name>pipe_od_in</name>
+      <display_name>Pipe outside diameter (in)</display_name>
+      <description>HDPE pipe outside diameter, inches. Default: 1-1/4 in. SDR 11.</description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>1.66</default_value>
+    </argument>
+    <argument>
+      <name>pipe_id_in</name>
+      <display_name>Pipe inside diameter (in)</display_name>
+      <description>HDPE pipe inside diameter, inches. Default: 1-1/4 in. SDR 11.</description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>1.358</default_value>
+    </argument>
+    <argument>
+      <name>soil_k</name>
+      <display_name>Soil thermal conductivity (Btu/h-ft-F)</display_name>
+      <description>Soil thermal conductivity, Btu/h-ft-F. Default: moist silt loam (1.2 W/m-K).</description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>0.693</default_value>
+    </argument>
+    <argument>
+      <name>soil_density</name>
+      <display_name>Soil density (lb/ft3)</display_name>
+      <description>Soil density, lb/ft3. Default: silt loam (1,700 kg/m3).</description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>106.1</default_value>
+    </argument>
+    <argument>
+      <name>soil_cp</name>
+      <display_name>Soil specific heat (Btu/lb-F)</display_name>
+      <description>Soil specific heat, Btu/lb-F. Default: moist silt loam (1,400 J/kg-K).</description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>0.3344</default_value>
+    </argument>
+    <argument>
+      <name>soil_moisture_pct</name>
+      <display_name>Soil moisture content (%)</display_name>
+      <description>Volumetric soil moisture content, percent.</description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>30</default_value>
+    </argument>
+    <argument>
+      <name>soil_moisture_sat_pct</name>
+      <display_name>Soil moisture content at saturation (%)</display_name>
+      <description>Volumetric soil moisture content at saturation, percent.</description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>50</default_value>
+    </argument>
+    <argument>
+      <name>ground_avg_f</name>
+      <display_name>Average ground surface temperature (F)</display_name>
+      <description>
+        Annual average ground surface temperature for the Kusuda-Achenbach
+        model, deg F. The mean annual air temperature is a common estimate.
+      </description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>45</default_value>
+    </argument>
+    <argument>
+      <name>ground_amp_f</name>
+      <display_name>Ground surface temperature amplitude (F)</display_name>
+      <description>
+        Amplitude of the annual ground surface temperature swing, deg F (half
+        the difference between the warmest and coldest monthly means).
+      </description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>20.3</default_value>
+    </argument>
+    <argument>
+      <name>ground_phase_days</name>
+      <display_name>Day of minimum ground surface temperature</display_name>
+      <description>Day of the year on which the ground surface temperature is lowest.</description>
+      <type>Double</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>30</default_value>
+    </argument>
+  </arguments>
+  <outputs/>
+  <provenances/>
+  <tags>
+    <tag>HVAC.Heat Rejection</tag>
+  </tags>
+  <attributes>
+    <attribute>
+      <name>Measure Type</name>
+      <value>ModelMeasure</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Measure Language</name>
+      <value>Ruby</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>Apply Measure Now</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>OpenStudio Application</value>
+      <datatype>string</datatype>
+    </attribute>
+    <attribute>
+      <name>Intended Software Tool</name>
+      <value>Parametric Analysis Tool</value>
+      <datatype>string</datatype>
+    </attribute>
+  </attributes>
+  <files>
+    <file>
+      <filename>LICENSE.md</filename>
+      <filetype>md</filetype>
+      <usage_type>license</usage_type>
+      <checksum>4E306062</checksum>
+    </file>
+    <file>
+      <filename>README.md</filename>
+      <filetype>md</filetype>
+      <usage_type>readme</usage_type>
+      <checksum>D1465F6E</checksum>
+    </file>
+    <file>
+      <filename>README.md.erb</filename>
+      <filetype>erb</filetype>
+      <usage_type>readmeerb</usage_type>
+      <checksum>F1C26127</checksum>
+    </file>
+    <file>
+      <version>
+        <software_program>OpenStudio</software_program>
+        <identifier>3.11.0</identifier>
+        <min_compatible>3.11.0</min_compatible>
+      </version>
+      <filename>measure.rb</filename>
+      <filetype>rb</filetype>
+      <usage_type>script</usage_type>
+      <checksum>AB1D9AB2</checksum>
+    </file>
+    <file>
+      <filename>add_horizontal_trench_ground_loop_test.rb</filename>
+      <filetype>rb</filetype>
+      <usage_type>test</usage_type>
+      <checksum>2DD53DCF</checksum>
+    </file>
+  </files>
+</measure>

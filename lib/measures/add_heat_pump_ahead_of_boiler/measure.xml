@@ -1,54 +1,93 @@
-<?xml version='1.0'?> 
+<?xml version='1.0'?>
 <measure>
   <schema_version>3.1</schema_version>
   <name>add_heat_pump_ahead_of_boiler</name>
   <uid>9e44452c-5ccf-4cf9-a7e5-0b6dc7213afa</uid>
-  <version_id>1dc18102-c3dc-4b8e-878c-75a5d7b669c4</version_id>
-  <version_modified>2026-10-13T20:08:08Z</version_modified>
-  <xml_checksum>00BFCA0F</xml_checksum>
+  <version_id>58ce9828-fbca-44d7-b3e5-99ef593e47dd</version_id>
+  <version_modified>2026-10-16T16:03:45Z</version_modified>
+  <xml_checksum>7F5ACD58</xml_checksum>
   <class_name>AddHeatPumpAheadOfBoiler</class_name>
   <display_name>Add Heat Pump Ahead Of Boiler</display_name>
   <description>
-     Connects an existing heating heat pump that is not yet on a plant loop
+    Connects an existing heating heat pump that is not yet on a plant loop
     (plant loop EIR, water-to-water equation fit, or fuel-fired air-to-water) in
     series ahead of a hot water boiler, so the heat pump preheats the return
     water and the boiler trims to the loop supply temperature. The heat pump's
-    leaving water temperature follows the loop's outdoor air reset but is capped
-    at a maximum the heat pump can deliver. Use it after a measure that creates
-    the heat pump, such as Create Air-to-Water Heat Pump, and after the loop has
-    an outdoor air reset, such as from Hot Water Supply Outdoor Air Reset. 
+    leaving water temperature follows the loop's existing control, an outdoor
+    air reset or a constant or variable schedule, limited to the lower of the
+    heat pump's maximum and the loop's maximum temperature. A heat pump maximum
+    that varies with outdoor or source temperature (as set by the create
+    measures) is applied each timestep. By default the loop keeps at least the
+    heat pump's design flow, with a bypass for flow the coils do not take. The
+    heat pump's maximum is read from the heat pump when the model has one (as
+    set by Create Air-to-Water Heat Pump or Create Water-to-Water Heat Pump), or
+    entered. Use it after a measure that creates the heat pump, such as Create
+    Air-to-Water Heat Pump or Create Water-to-Water Heat Pump (for a
+    water-source heat pump, also connect its source side, for example with Add
+    Horizontal Trench Ground Loop). The loop's supply outlet must have an
+    outdoor air reset or scheduled temperature setpoint manager.
   </description>
   <modeler_description>
-     Supports HeatPumpPlantLoopEIRHeating,
-    HeatPumpWaterToWaterEquationFitHeating and
-    HeatPumpAirToWaterFuelFiredHeating. HeatPumpAirToWater is not supported: in
-    OpenStudio 3.11 the forward translator crashes when a setpoint manager is on
-    its heating mode's outlet node. Adds the selected heat pump at the boiler's
-    inlet node, so it sits in series on the boiler's branch. The loop is the
-    boiler's plant loop, which must have a SetpointManagerOutdoorAirReset on its
-    supply outlet. The heat pump outlet gets a SetpointManagerOutdoorAirReset
-    that equals min(maximum LWT, loop reset): its low-OA point moves to the
-    outdoor temperature where the loop reset crosses the cap. With a setpoint
-    manager on its outlet the heat pump is dispatched by
-    PlantEquipmentOperation:ComponentSetpoint (for the EIR heat pump ControlType
-    is also set to Setpoint; the other types have no such field). Boiler trim
-    control Load leaves the boiler in the load-based heating scheme. Setpoint
-    gives the boiler outlet its own reset matching the loop and sets the boiler
-    flow mode to LeavingSetpointModulated; EnergyPlus then requests design flow
-    continuously, which raises pump energy. A water-source heat pump whose
-    source side is not connected to a condenser loop is reported as a warning. 
+    Supports HeatPumpPlantLoopEIRHeating, HeatPumpWaterToWaterEquationFitHeating
+    and HeatPumpAirToWaterFuelFiredHeating. HeatPumpAirToWater is not supported:
+    in OpenStudio 3.11 the forward translator crashes when a setpoint manager is
+    on its heating mode's outlet node. Adds the selected heat pump at the
+    boiler's inlet node, so it sits in series on the boiler's branch. The loop
+    is the boiler's plant loop; its supply outlet must have a
+    SetpointManagerOutdoorAirReset or a SetpointManagerScheduled with control
+    variable Temperature. The cap is the lowest of the maximum LWT argument (0 =
+    not used), the heat pump's maximum and the loop's MaximumLoopTemperature.
+    The heat pump's maximum is read only for HeatPumpPlantLoopEIRHeating: its
+    MaximumSupplyWaterTemperatureCurve (any curve, or a one-variable
+    Table:Lookup, interpolated here because OpenStudio cannot evaluate tables),
+    else the x (leaving water) maximum of its capacity curve. When that curve
+    varies and its lowest value is below the fixed limits, the setpoint manager
+    is capped at the curve's highest value and an EMS program (calling point
+    AfterPredictorAfterHVACManagers) sets the heat pump outlet node setpoint
+    each timestep to min(loop supply outlet setpoint, @CurveValue at the sensor
+    Heat Pump Source Side Inlet Temperature, fixed limits). The curve is read at
+    the source inlet temperature: outdoor air for an air source, entering source
+    water for a water source. EnergyPlus 25.2 does not hold the EIR heat pump's
+    outlet to that curve (tested: with a 105F curve and a 113F setpoint the heat
+    pump delivered 113F), so the setpoint cap is what enforces it. An entered
+    maximum above the heat pump's is reduced to it with a warning; with 0
+    entered and no heat pump maximum (equation fit, fuel-fired) the measure
+    stops with an error. The heat pump outlet gets a setpoint manager of the
+    same kind equal to min(cap, loop setpoint): for an outdoor air reset, an end
+    above the cap moves along the reset line to where it crosses the cap; for a
+    ScheduleConstant, a new ScheduleConstant; for a ScheduleRuleset, a clone
+    (rules and day schedules) with each day schedule value capped. Other
+    schedule types are rejected. With a setpoint manager on its outlet the heat
+    pump is dispatched by PlantEquipmentOperation:ComponentSetpoint (for the EIR
+    heat pump ControlType is also set to Setpoint; the other types have no such
+    field). Boiler trim control Load leaves the boiler in the load-based heating
+    scheme. Setpoint gives the boiler outlet its own setpoint manager matching
+    the loop's (uncapped) and sets the boiler flow mode to
+    LeavingSetpointModulated; EnergyPlus then requests design flow continuously,
+    which raises pump energy. Heat pump water flow Bypass sets the plant loop's
+    MinimumLoopFlowRate to the heat pump's load side design flow, adds a demand
+    branch with only a PipeAdiabatic if the loop has none, raises a hard-sized
+    MaximumLoopFlowRate to that flow, fixes an autosized one at it (with a
+    warning; EnergyPlus caps the loop flow at its maximum), and sets an EIR heat
+    pump's FlowMode to ConstantFlow. The heat pump must be in series with the
+    whole loop flow (as when the boiler is on the supply outlet run); on a
+    parallel branch a warning is given. A water-source heat pump whose source
+    side is not connected to a condenser loop is reported as a warning; an EIR
+    heat pump counts as water source if its CondenserType is WaterSource or its
+    AdditionalProperties has IntendedCondenserType = WaterSource (set by Create
+    Water-to-Water Heat Pump).
   </modeler_description>
   <arguments>
     <argument>
       <name>hp_name</name>
       <display_name>Heat pump</display_name>
       <description>
-         Heating heat pump not yet connected to a loop:
+        Heating heat pump not yet connected to a loop:
         HeatPump:PlantLoop:EIR:Heating,
         HeatPump:WaterToWater:EquationFit:Heating, or
         HeatPump:AirToWater:FuelFired:Heating. 'First unconnected heat pump'
         takes the first one found when the measure runs, for use after a measure
-        in the same workflow that creates the heat pump. 
+        in the same workflow that creates the heat pump.
       </description>
       <type>Choice</type>
       <required>true</required>
@@ -73,22 +112,29 @@
       <name>max_lwt_f</name>
       <display_name>Maximum heat pump leaving water temperature (F)</display_name>
       <description>
-         Cap on the heat pump's leaving water setpoint, deg F. Above it the
-        boiler supplies the rest of the loop's reset temperature. 
+        Cap on the heat pump's leaving water setpoint, deg F. 0 uses the heat
+        pump's own maximum: its Maximum Supply Water Temperature Curve (set by
+        Create Air-to-Water Heat Pump and Create Water-to-Water Heat Pump), or
+        for a plant loop EIR heat pump without one, its capacity curve's leaving
+        water limit. A value above the heat pump's maximum is reduced to it, and
+        the loop's maximum temperature applies if it is lower still.
+        Water-to-water equation fit and fuel-fired heat pumps carry no maximum
+        in the model, so enter one for them. Above the cap the boiler supplies
+        the rest of the loop's setpoint.
       </description>
       <type>Double</type>
       <required>true</required>
       <model_dependent>false</model_dependent>
-      <default_value>113</default_value>
+      <default_value>0</default_value>
     </argument>
     <argument>
       <name>boiler_control</name>
       <display_name>Boiler trim control</display_name>
       <description>
-         Load: the boiler stays in the load-based heating scheme and its flow
-        follows coil demand. Setpoint: the boiler gets its own outdoor air reset
-        (component setpoint scheme); EnergyPlus then requests design flow
-        continuously, which raises pump energy. 
+        Load: the boiler stays in the load-based heating scheme and its flow
+        follows coil demand. Setpoint: the boiler gets its own setpoint manager
+        matching the loop's (component setpoint scheme); EnergyPlus then
+        requests design flow continuously, which raises pump energy.
       </description>
       <type>Choice</type>
       <required>true</required>
@@ -102,6 +148,31 @@
         <choice>
           <value>Setpoint</value>
           <display_name>Setpoint</display_name>
+        </choice>
+      </choices>
+    </argument>
+    <argument>
+      <name>hp_flow</name>
+      <display_name>Heat pump water flow</display_name>
+      <description>
+        Bypass: the loop keeps at least the heat pump's design flow, with the
+        excess returning through a demand-side bypass pipe (added if the loop
+        has none), so the heat pump always sees its design flow. Loop flow: the
+        heat pump sees whatever the coils draw, which can fall below the
+        manufacturer's minimum.
+      </description>
+      <type>Choice</type>
+      <required>true</required>
+      <model_dependent>false</model_dependent>
+      <default_value>Bypass</default_value>
+      <choices>
+        <choice>
+          <value>Bypass</value>
+          <display_name>Bypass</display_name>
+        </choice>
+        <choice>
+          <value>Loop flow</value>
+          <display_name>Loop flow</display_name>
         </choice>
       </choices>
     </argument>
@@ -149,7 +220,7 @@
       <filename>README.md</filename>
       <filetype>md</filetype>
       <usage_type>readme</usage_type>
-      <checksum>D5C958D1</checksum>
+      <checksum>7ECD8D5F</checksum>
     </file>
     <file>
       <filename>README.md.erb</filename>
@@ -166,13 +237,13 @@
       <filename>measure.rb</filename>
       <filetype>rb</filetype>
       <usage_type>script</usage_type>
-      <checksum>7D3455E8</checksum>
+      <checksum>EFA45AD3</checksum>
     </file>
     <file>
       <filename>add_heat_pump_ahead_of_boiler_test.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
-      <checksum>1DBBD425</checksum>
+      <checksum>22C48423</checksum>
     </file>
   </files>
 </measure>
